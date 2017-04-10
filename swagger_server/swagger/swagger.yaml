@@ -1,0 +1,104 @@
+---
+swagger: "2.0"
+info:
+  description: "The Allele Calling  service provides an API for converting raw sequence\
+    \ data to GFE. It provides both a RESTful API and a simple user interface for\
+    \ converting raw sequence data to GFE results. Sequences can be submitted one\
+    \ at a time or as a fasta file. This service uses <a href=\"https://github.com/nmdp-bioinformatics/service-feature\"\
+    >nmdp-bioinformatics/service-feature</a> for encoding the raw sequence data and\
+    \ <a href=\"https://github.com/nmdp-bioinformatics/HSA\">nmdp-bioinformatics/HSA</a>\
+    \ for aligning the raw sequence data. The code is open source, and available on\
+    \ <a href=\"https://github.com/nmdp-bioinformatics/service-act\">GitHub</a>.<br><br>Go\
+    \ to <a href=\"http://service-act.readthedocs.io\">service-act.readthedocs.io</a>\
+    \ for more information"
+  version: "0.0.1"
+  title: "Allele Calling Service"
+  contact:
+    email: "mhalagan@nmdp.org"
+  license:
+    name: "GNU GENERAL PUBLIC LICENSE"
+    url: "https://www.gnu.org/licenses/lgpl.html"
+paths:
+  /hla:
+    post:
+      description: "Get HLA and GFE from consensus sequence"
+      operationId: "hla_post"
+      parameters:
+      - name: "locus"
+        in: "query"
+        description: "Valid HLA locus"
+        required: true
+        type: "string"
+      - name: "sequence"
+        in: "query"
+        description: "Consensus sequence"
+        required: true
+        type: "string"
+      - name: "neo4j_url"
+        in: "query"
+        description: "URL for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "gfe_url"
+        in: "query"
+        description: "URL for the gfe-service"
+        required: false
+        type: "string"
+      - name: "verbose"
+        in: "query"
+        description: "Flag for running service in verbose"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "Gene Feature Enumeration (GFE) from fasta file"
+          schema:
+            $ref: "#/definitions/AlleleCall"
+        404:
+          description: "Failed to generate GFE from fasta"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+definitions:
+  Error:
+    type: "object"
+    required:
+    - "Message"
+    - "version"
+    properties:
+      Message:
+        type: "string"
+      accession:
+        type: "string"
+      file:
+        type: "string"
+      gfe:
+        type: "string"
+      log:
+        type: "array"
+        items:
+          type: "string"
+      rank:
+        type: "integer"
+      sequence:
+        type: "string"
+      term:
+        type: "string"
+      type:
+        type: "string"
+      version:
+        type: "string"
+  AlleleCall:
+    type: "object"
+    properties:
+      hla:
+        type: "array"
+        items:
+          type: "string"
+      gfe:
+        type: "string"
+    example:
+      gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-0"
+      hla:
+      - "HLA-A*01:01:01:02"
+      - "HLA-A*01:01:01:01"
