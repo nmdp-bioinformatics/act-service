@@ -1,16 +1,6 @@
 ---
 swagger: "2.0"
 info:
-  description: "The Allele Calling  service provides an API for converting raw sequence\
-    \ data to GFE. It provides both a RESTful API and a simple user interface for\
-    \ converting raw sequence data to GFE results. Sequences can be submitted one\
-    \ at a time or as a fasta file. This service uses <a href=\"https://github.com/nmdp-bioinformatics/service-feature\"\
-    >nmdp-bioinformatics/service-feature</a> for encoding the raw sequence data and\
-    \ <a href=\"https://github.com/nmdp-bioinformatics/HSA\">nmdp-bioinformatics/HSA</a>\
-    \ for aligning the raw sequence data. The code is open source, and available on\
-    \ <a href=\"https://github.com/nmdp-bioinformatics/service-act\">GitHub</a>.<br><br>Go\
-    \ to <a href=\"http://service-act.readthedocs.io\">service-act.readthedocs.io</a>\
-    \ for more information"
   version: "0.0.1"
   title: "Allele Calling Service"
   contact:
@@ -42,6 +32,16 @@ paths:
       - name: "gfe_url"
         in: "query"
         description: "URL for the gfe-service"
+        required: false
+        type: "string"
+      - name: "password"
+        in: "query"
+        description: "Password for neo4j db"
+        required: false
+        type: "string"
+      - name: "user"
+        in: "query"
+        description: "Username for neo4j db"
         required: false
         type: "string"
       - name: "verbose"
