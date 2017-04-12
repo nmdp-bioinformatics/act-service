@@ -7,14 +7,20 @@ from six import iteritems
 from ..util import deserialize_date, deserialize_datetime
 
 from py2neo import Graph
-import sys
 from gfe_typing.gfe import GfeTyping
-from Bio import SeqIO
-import re
-from collections import defaultdict
+import os
+import sys
+
+neo4j_pass = ''
+if os.getenv("NEO4JPASS"):
+    neo4j_pass = os.getenv("NEO4JPASS")
+
+neo4j_user = ''
+if os.getenv("NEO4JUSER"):
+    neo4j_user = os.getenv("NEO4JUSER")
 
 
-def hla_post(locus, sequence, neo4j_url=None, gfe_url=None, verbose=None):
+def hla_post(locus, sequence, neo4j_url="http://neo4j.b12x.org:80", gfe_url=None, user=neo4j_user, password=neo4j_pass, verbose=None):
     """
     hla_post
     Get HLA and GFE from consensus sequence
@@ -31,9 +37,7 @@ def hla_post(locus, sequence, neo4j_url=None, gfe_url=None, verbose=None):
 
     :rtype: AlleleCall
     """
-    user = "dash5"
-    password = "chori"
-    graph = Graph("http://neo4j.b12x.org:80", user=user, password=password, bolt=False)
+    graph = Graph(neo4j_url, user=user, password=password, bolt=False)
     typer = GfeTyping(graph)
     gfe_output = typer.type_gfe(locus, sequence.upper())
     [gfe_new, hla, gfe] = [gfe_output[0], gfe_output[1], gfe_output[2]]
