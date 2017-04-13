@@ -10,7 +10,6 @@ from ..util import deserialize_date, deserialize_datetime
 from py2neo import Graph
 from gfe_db.graph import GfeDB
 import os
-import sys
 
 neo4j_pass = ''
 if os.getenv("NEO4JPASS"):
@@ -69,9 +68,6 @@ def ars_post(allele, group, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_use
 
     :rtype: ArsCall
     """
-    print("URL: ", neo4j_url, file=sys.stderr)
-    print("USER: ", user, file=sys.stderr)
-    print("PASS: ", password, file=sys.stderr)
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
     typer = GfeDB(graph, hostname=gfe_url)
     ars_output = typer.ars_redux(group, allele)
