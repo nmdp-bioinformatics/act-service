@@ -83,3 +83,27 @@ def groups(locus, exon2, exon3):
     cypher = match + match2 + where + where2 + withst + returnc
     return(cypher)
 
+
+def hla_gfe(hla):
+    seq_query = "MATCH (hla:IMGT)-[:HAS_GFE]-(gfe:GFE)"
+    seq_query1 = " WHERE hla.name = \"" + hla + "\""
+    seq_query2 = " RETURN DISTINCT gfe.name AS GFE"
+    query = seq_query + seq_query1 + seq_query2
+    return(query)
+
+
+def hla_ars(group, hla):
+    matchq = "MATCH (group:" + group + ")-[:IN_GROUP]-(hla:IMGT) WHERE hla.name = \"" + hla + "\""
+    returnq = " RETURN DISTINCT group.name as ARS"
+    cyper_query = matchq + returnq
+    return(cyper_query)
+
+
+def get_sequence(seqtype, allele):
+    seq_query = "MATCH (allele:" + seqtype + ")-[:HAS_FEATURE]-(seq:SEQUENCE)"
+    seq_query1 = " WHERE allele.name = \"" + allele + "\""
+    seq_query2 = " RETURN DISTINCT seq.sequence AS SEQ"
+    query = seq_query + seq_query1 + seq_query2
+    return(query)
+
+

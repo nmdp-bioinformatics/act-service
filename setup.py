@@ -3,7 +3,7 @@
 import sys
 from setuptools import setup, find_packages
 
-NAME = "act"
+NAME = "act_service"
 VERSION = "0.0.1"
 
 # To install the library, run the following
@@ -21,7 +21,7 @@ setup(
     url="",
     keywords=["Swagger", "Allele Calling Service"],
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    package_data={'': ['swagger/swagger.yaml'],'gfe_typing': ['data/*.structure']},
+    package_data={'': ['swagger/swagger.yaml'], 'act': ['hla_typing/data/*.structure']},
     install_requires=['py2neo', 'pandas', 'connexion', 'nose', 'biopython'],
     include_package_data=True,
     long_description="""\
