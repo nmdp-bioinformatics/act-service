@@ -1,6 +1,8 @@
 ---
 swagger: "2.0"
 info:
+  description: "The Allele Calling  service provides an API for converting raw sequence\
+    \ data to GFE and HLA allele calls."
   version: "0.0.1"
   title: "Allele Calling Service"
   contact:
@@ -9,10 +11,10 @@ info:
     name: "GNU GENERAL PUBLIC LICENSE"
     url: "https://www.gnu.org/licenses/lgpl.html"
 paths:
-  /hla:
+  /act:
     post:
       description: "Get HLA and GFE from consensus sequence"
-      operationId: "hla_post"
+      operationId: "act_post"
       parameters:
       - name: "locus"
         in: "query"
@@ -29,19 +31,19 @@ paths:
         description: "URL for the neo4j graph"
         required: false
         type: "string"
-      - name: "gfe_url"
+      - name: "user"
         in: "query"
-        description: "URL for the gfe-service"
+        description: "Username for the neo4j graph"
         required: false
         type: "string"
       - name: "password"
         in: "query"
-        description: "Password for neo4j db"
+        description: "Password for the neo4j graph"
         required: false
         type: "string"
-      - name: "user"
+      - name: "gfe_url"
         in: "query"
-        description: "Username for neo4j db"
+        description: "URL for the gfe-service"
         required: false
         type: "string"
       - name: "verbose"
@@ -51,9 +53,199 @@ paths:
         type: "boolean"
       responses:
         200:
-          description: "Gene Feature Enumeration (GFE) from fasta file"
+          description: "HLA and GFE from consensus sequence"
           schema:
             $ref: "#/definitions/AlleleCall"
+        404:
+          description: "Failed to generate GFE from fasta"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+  /hla:
+    post:
+      description: "Get HLA associated with GFE notation"
+      operationId: "hla_post"
+      parameters:
+      - name: "gfe"
+        in: "query"
+        description: "GFE Notation"
+        required: true
+        type: "string"
+      - name: "neo4j_url"
+        in: "query"
+        description: "URL for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "user"
+        in: "query"
+        description: "Username for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "password"
+        in: "query"
+        description: "Password for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "gfe_url"
+        in: "query"
+        description: "URL for the gfe-service"
+        required: false
+        type: "string"
+      - name: "verbose"
+        in: "query"
+        description: "Flag for running service in verbose"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "HLA associated with GFE notation"
+          schema:
+            $ref: "#/definitions/AlleleCall"
+        404:
+          description: "Failed to generate GFE from fasta"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+  /gfe:
+    post:
+      description: "Get GFE notation associated with an HLA allele"
+      operationId: "gfe_post"
+      parameters:
+      - name: "hla"
+        in: "query"
+        description: "HLA allele"
+        required: true
+        type: "string"
+      - name: "neo4j_url"
+        in: "query"
+        description: "URL for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "user"
+        in: "query"
+        description: "Username for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "password"
+        in: "query"
+        description: "Password for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "gfe_url"
+        in: "query"
+        description: "URL for the gfe-service"
+        required: false
+        type: "string"
+      - name: "verbose"
+        in: "query"
+        description: "Flag for running service in verbose"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "GFE notation associated with an HLA allele"
+          schema:
+            $ref: "#/definitions/AlleleCall"
+        404:
+          description: "Failed to generate GFE from fasta"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+  /sequence:
+    post:
+      description: "Get sequence associated with an HLA allele or GFE notation"
+      operationId: "sequence_post"
+      parameters:
+      - name: "allele"
+        in: "query"
+        description: "HLA allele or GFE notation"
+        required: true
+        type: "string"
+      - name: "allele_type"
+        in: "query"
+        description: "Specify whether it's IMGT or GFE"
+        required: true
+        type: "string"
+      - name: "neo4j_url"
+        in: "query"
+        description: "URL for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "user"
+        in: "query"
+        description: "Username for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "password"
+        in: "query"
+        description: "Password for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "gfe_url"
+        in: "query"
+        description: "URL for the gfe-service"
+        required: false
+        type: "string"
+      - name: "verbose"
+        in: "query"
+        description: "Flag for running service in verbose"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "Sequence associated with an HLA allele or GFE notation"
+          schema:
+            $ref: "#/definitions/Sequence"
+        404:
+          description: "Failed to generate GFE from fasta"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+  /ars:
+    post:
+      description: "Get ARS group associated with a GFE notation or HLA allele"
+      operationId: "ars_post"
+      parameters:
+      - name: "allele"
+        in: "query"
+        description: "HLA allele or GFE Notation"
+        required: true
+        type: "string"
+      - name: "group"
+        in: "query"
+        description: "ARS Group Type"
+        required: true
+        type: "string"
+      - name: "neo4j_url"
+        in: "query"
+        description: "URL for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "user"
+        in: "query"
+        description: "Username for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "password"
+        in: "query"
+        description: "Password for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "gfe_url"
+        in: "query"
+        description: "URL for the gfe-service"
+        required: false
+        type: "string"
+      - name: "verbose"
+        in: "query"
+        description: "Flag for running service in verbose"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "ARS group associated with a GFE notation or HLA allele"
+          schema:
+            $ref: "#/definitions/ArsCall"
         404:
           description: "Failed to generate GFE from fasta"
           schema:
@@ -97,8 +289,41 @@ definitions:
           type: "string"
       gfe:
         type: "string"
+      version:
+        type: "string"
     example:
       gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-0"
       hla:
       - "HLA-A*01:01:01:02"
       - "HLA-A*01:01:01:01"
+      version: "0.0.1"
+  ArsCall:
+    type: "object"
+    properties:
+      allele:
+        type: "string"
+      group_type:
+        type: "string"
+      group:
+        type: "string"
+      version:
+        type: "string"
+    example:
+      allele: "HLA-A*01:01:01:01"
+      group_type: "G_GROUP"
+      group: "HLA-A*01:01:01G"
+      version: "0.0.1"
+  Sequence:
+    type: "object"
+    properties:
+      sequence:
+        type: "array"
+        items:
+          type: "string"
+      version:
+        type: "string"
+    example:
+      sequence:
+      - "tccccagacgccgaggatggccgtcatggcgccccgaaccctcctcctgctactctcgggggccctggccctgacccagacctgggcgggtgagtgcggggtcgggagggaaaccgcctctgcggggagaagcaaggggccctcctggcgggggcgcaggaccgggggagccgcgccgggacgagggtcgggcaggtctcagccactgctcgcccccaggctcccactccatgaggtatttcttcacatccgtgtcccggcccggccgcggggagccccgcttcatcgccgtgggctacgtggacgacacgcagttcgtgcggttcgacagcgacgccgcgagccagaggatggagccgcgggcgccgtggatagagcaggaggggccggagtattgggaccaggagacacggaatgtgaaggcccagtcacagactgaccgagtggacctggggaccctgcgcggctactacaaccagagcgaggccggtgagtgaccccggccgggggcgcaggtcaggacccctcatcccccacggacgggccaggtcgcccacagtctccgggtccgagatccaccccgaagccgcgggaccccgagacccttgccccgggagaggcccaggcgcctttacccggtttcattttcagtttaggccaaaaatccccccgggttggtcggggctgggcggggctcgggggactgggctgaccgcggggtcggggccaggttctcacaccatccagataatgtatggctgcgacgtggggtcggacgggcgcttcctccgcgggtaccggcaggacgcctacgacggcaaggattacatcgccctgaacgaggacctgcgctcttggaccgcggcggacatggcggctcagatcaccaagcgcaagtgggaggcggcccatgaggcggagcagttgagagcctacctggatggcacgtgcgtggagtggctccgcagatacctggagaacgggaaggagacgctgcagcgcacgggtaccaggggccacggggcgcctccctgatcgcctgtagatctcccgggctggcctcccacaaggaggggagacaattgggaccaacactagaatatcaccctccctctggtcctgagggagaggaatcctcctgggttccagatcctgtaccagagagtgactctgaggttccgccctgctctctgacacaattaagggataaaatctctgaaggagtgacgggaagacgatccctcgaatactgatgagtggttccctttgacaccggcagcagccttgggcccgtgacttttcctctcaggccttgttctctgcttcacactcaatgtgtgtgggggtctgagtccagcacttctgagtccctcagcctccactcaggtcaggaccagaagtcgctgttcccttctcagggaatagaagattatcccaggtgcctgtgtccaggctggtgtctgggttctgtgctctcttccccatcccgggtgtcctgtccattctcaagatggccacatgcgtgctggtggagtgtcccatgacagatgcaaaatgcctgaattttctgactcttcccgtcagacccccccaagacacatatgacccaccaccccatctctgaccatgaggccaccctgaggtgctgggccctgggcttctaccctgcggagatcacactgacctggcagcgggatggggaggaccagacccaggacacggagctcgtggagaccaggcctgcaggggatggaaccttccagaagtgggcggctgtggtggtgccttctggagaggagcagagatacacctgccatgtgcagcatgagggtctgcccaagcccctcaccctgagatggggtaaggagggagatgggggtgtcatgtctcttagggaaagcaggagcctctctggagacctttagcagggtcagggcccctcaccttcccctcttttcccagagctgtcttcccagcccaccatccccatcgtgggcatcattgctggcctggttctccttggagctgtgatcactggagctgtggtcgctgccgtgatgtggaggaggaagagctcaggtggagaaggggtgaagggtggggtctgagatttcttgtctcactgagggttccaagccccagctagaaatgtgccctgtctcattactgggaagcaccgtccacaatcatgggcctacccagtctgggccctgtgtgccagcacttactcttttgtaaagcacctgttaaaatgaaggacagatttatcaccttgattacggcggtgatgggacctgatcccagcagtcacaagtcacaggggaaggtccctgaggacagacctcaggagggctattggtccaggacccacacctgctttcttcatgtttcctgatcccgccctgggtctgcagtcacacatttctggaaacttctctggggtccaagactaggaggttcctctaggaccttaaggccctggctcctttctggtatctcacaggacattttcttctcacagatagaaaaggagggagttacactcaggctgcaagtaagtatgaaggaggctgatgcctgaggtccttgggatattgtgtttgggagcccatgggggagcccacccacctcacaattcctcctctagccacatcttctgtgggatctgaccaggttctgtttttgttctaccccaggcagtgacagtgcccagggctctgatgtgtccctcacagcttgtaaaggtgagagcttggaggacctaatgtgtgttgggtgttgggcggaacagtggacacagctgtgctatggggtttctttgcattggatgtattgagcatgcgatgggctgtttaaggtgtgacccctcactgtgatggatatgaatttgttcatgaatatttttttctatagtgtgagacagctgccttgtgtgggactgag"
+      - "tccccagacgccgaggatggccgtcatggcgccccgaaccctcctcctgctactctcgggggccctggccctgacccagacctgggcgggtgagtgcggggtcgggagggaaaccgcctctgcggggagaagcaaggggccctcctggcgggggcgcaggaccgggggagccgcgccgggacgagggtcgggcaggtctcagccactgctcgcccccaggctcccactccatgaggtatttcttcacatccgtgtcccggcccggccgcggggagccccgcttcatcgccgtgggctacgtggacgacacgcagttcgtgcggttcgacagcgacgccgcgagccagaggatggagccgcgggcgccgtggatagagcaggaggggccggagtattgggaccaggagacacggaatgtgaaggcccagtcacagactgaccgagtggacctggggaccctgcgcggctactacaaccagagcgaggccggtgagtgaccccggccgggggcgcaggtcaggacccctcatcccccacggacgggccaggtcgcccacagtctccgggtccgagatccaccccgaagccgcgggaccccgagacccttgccccgggagaggcccaggcgcctttacccggtttcattttcagtttaggccaaaaatccccccgggttggtcggggctgggcggggctcgggggactgggctgaccgcggggtcggggccaggttctcacaccatccagataatgtatggctgcgacgtggggtcggacgggcgcttcctccgcgggtaccggcaggacgcctacgacggcaaggattacatcgccctgaacgaggacctgcgctcttggaccgcggcggacatggcggctcagatcaccaagcgcaagtgggaggcggcccatgaggcggagcagttgagagcctacctggatggcacgtgcgtggagtggctccgcagatacctggagaacgggaaggagacgctgcagcgcacgggtaccaggggccacggggcgcctccctgatcgcctgtagatctcccgggctggcctcccacaaggaggggagacaattgggaccaacactagaatatcaccctccctctggtcctgagggagaggaatcctcctgggttccagatcctgtaccagagagtgactctgaggttccgccctgctctctgacacaattaagggataaaatctctgaaggagtgacgggaagacgatccctcgaatactgatgagtggttccctttgacaccggcagcagccttgggcccgtgacttttcctctcaggccttgttctctgcttcacactcaatgtgtgtgggggtctgagtccagcacttctgagtccctcagcctccactcaggtcaggaccagaagtcgctgttcccttctcagggaatagaagattatcccaggtgcctgtgtccaggctggtgtctgggttctgtgctctcttccccatcccgggtgtcctgtccattctcaagatggccacatgcgtgctggtggagtgtcccatgacagatgcaaaatgcctgaattttctgactcttcccgtcagacccccccaagacacatatgacccaccaccccatctctgaccatgaggccaccctgaggtgctgggccctgggcttctaccctgcggagatcacactgacctggcagcgggatggggaggaccagacccaggacacggagctcgtggagaccaggcctgcaggggatggaaccttccagaagtgggcggctgtggtggtgccttctggagaggagcagagatacacctgccatgtgcagcatgagggtctgcccaagcccctcaccctgagatggggtaaggagggagatgggggtgtcatgtctcttagggaaagcaggagcctctctggagacctttagcagggtcagggcccctcaccttcccctcttttcccagagctgtcttcccagcccaccatccccatcgtgggcatcattgctggcctggttctccttggagctgtgatcactggagctgtggtcgctgccgtgatgtggaggaggaagagctcaggtggagaaggggtgaagggtggggtctgagatttcttgtctcactgagggttccaagccccagctagaaatgtgccctgtctcattactgggaagcaccgtccacaatcatgggcctacccagtctgggccctgtgtgccagcacttactcttttgtaaagcacctgttaaaatgaaggacagatttatcaccttgattacggcggtgatgggacctgatcccagcagtcacaagtcacaggggaaggtccctgaggacagacctcaggagggctattggtccaggacccacacctgctttcttcatgtttcctgatcccgccctgggtctgcagtcacacatttctggaaacttctctggggtccaagactaggaggttcctctaggaccttaaggccctggctcctttctggtatctcacaggacattttcttctcacagatagaaaaggagggagttacactcaggctgcaagtaagtatgaaggaggctgatgcctgaggtccttgggatattgtgtttgggagcccatgggggagcccacccacctcacaattcctcctctagccacatcttctgtgggatctgaccaggttctgtttttgttctaccccaggcagtgacagtgcccagggctctgatgtgtccctcacagcttgtaaaggtgagagcttggaggacctaatgtgtgttgggtgttgggcggaacagtggacacagctgtgctatggggtttctttgcattggatgtattgagcatgcgatgggctgtttaaggtgtgacccctcactgtgatggatatgaatttgttcatgaatatttttttctatagtgtgagacagctgccttgtgtgggactgag"
+      version: "0.0.1"

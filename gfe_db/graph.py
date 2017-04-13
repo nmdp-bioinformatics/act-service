@@ -4,13 +4,16 @@ Created on Feb 8, 2017
 @author: mhalagan
 '''
 
-from gfe_typing.cypher import sequence_search
-from gfe_typing.cypher import gfe_search
-from gfe_typing.cypher import similar_gfe
-from gfe_typing.cypher import gfe_hla
-from gfe_typing.cypher import groups
-from gfe_typing.cypher import gfe_Ggroups
-from gfe_typing.cypher import hla_Ggroups
+from gfe_db.cypher import sequence_search
+from gfe_db.cypher import gfe_search
+from gfe_db.cypher import similar_gfe
+from gfe_db.cypher import gfe_hla
+from gfe_db.cypher import groups
+from gfe_db.cypher import gfe_Ggroups
+from gfe_db.cypher import hla_Ggroups
+from gfe_db.cypher import hla_gfe
+from gfe_db.cypher import hla_ars
+from gfe_db.cypher import get_sequence
 
 import pandas as pa
 import swagger_client
@@ -22,7 +25,7 @@ import glob
 flatten = lambda l: [item for sublist in l for item in sublist]
 
 
-class GfeTyping(object):
+class GfeDB(object):
     '''
     classdocs
     '''
@@ -49,7 +52,7 @@ class GfeTyping(object):
                 features.append("-".join([feature, rank]))
                 self.structures.update({"HLA-" + locus: features})
 
-    def type_gfe(self, locus, sequence):
+    def type_hla(self, locus, sequence):
 
         sequence_exists = self.sequence_lookup(locus, sequence)
         if sequence_exists:
@@ -228,4 +231,41 @@ class GfeTyping(object):
                 count += 1
 
         return count
+
+    def get_gfe(self, hla):
+        gfe_query = hla_gfe(hla)
+        gfe_data = pa.DataFrame(self.graph.data(gfe_query))
+        if not gfe_data.empty:
+            gfe = [x for x in gfe_data["GFE"]]
+            return gfe
+        else:
+            return ''
+
+    def get_hla(self, gfe):
+        hla_query = gfe_hla(gfe)
+        hla_data = pa.DataFrame(self.graph.data(hla_query))
+        if not len(hla_data["HLA"][0]) == 0:
+            hla_alleles = flatten(hla_data["HLA"])
+            return hla_alleles
+        else:
+            return ''
+
+    def sequence(self, seq_type, allele):
+        seq_query = get_sequence(seq_type, allele)
+        seq_data = pa.DataFrame(self.graph.data(seq_query))
+        if not seq_data.empty:
+            seq = [x for x in seq_data["SEQ"]]
+            return seq
+        else:
+            return ''
+
+    def ars_redux(self, group, hla):
+        hla_query = hla_ars(group, hla)
+        hla_data = pa.DataFrame(self.graph.data(hla_query))
+        if not hla_data.empty:
+            hla = [x for x in hla_data["ARS"]]
+            return hla
+        else:
+            return ''
+
 
