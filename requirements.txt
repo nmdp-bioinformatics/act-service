@@ -11,6 +11,6 @@ pyparsing==2.1.10
 six==1.10.0
 certifi >= 14.05.14
 urllib3 >= 1.15.1
-typing
-uwsgi
+typing==3.6.1
+uWSGI==2.0.15
 flask

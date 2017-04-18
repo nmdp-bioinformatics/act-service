@@ -18,10 +18,10 @@ setup(
     version=VERSION,
     description="Allele Calling Service",
     author_email="mhalagan@nmdp.org",
-    url="",
+    url="https://github.com/nmdp-bioinformatics/service-act",
     keywords=["Swagger", "Allele Calling Service"],
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    package_data={'': ['swagger/swagger.yaml'], 'act': ['hla_typing/data/*.structure']},
+    package_data={'swagger_server': ['swagger/swagger.yaml'], 'gfe_db': ['data/*.structure']},
     install_requires=['py2neo', 'pandas', 'connexion', 'nose', 'biopython'],
     include_package_data=True,
     long_description="""\

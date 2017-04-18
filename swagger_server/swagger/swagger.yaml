@@ -12,9 +12,9 @@ info:
     url: "https://www.gnu.org/licenses/lgpl.html"
 paths:
   /act:
-    post:
+    get:
       description: "Get HLA and GFE from consensus sequence"
-      operationId: "act_post"
+      operationId: "act_get"
       parameters:
       - name: "locus"
         in: "query"
@@ -62,9 +62,9 @@ paths:
             $ref: "#/definitions/Error"
       x-swagger-router-controller: "swagger_server.controllers.default_controller"
   /hla:
-    post:
+    get:
       description: "Get HLA associated with GFE notation"
-      operationId: "hla_post"
+      operationId: "hla_get"
       parameters:
       - name: "gfe"
         in: "query"
@@ -107,9 +107,9 @@ paths:
             $ref: "#/definitions/Error"
       x-swagger-router-controller: "swagger_server.controllers.default_controller"
   /gfe:
-    post:
+    get:
       description: "Get GFE notation associated with an HLA allele"
-      operationId: "gfe_post"
+      operationId: "gfe_get"
       parameters:
       - name: "hla"
         in: "query"
@@ -152,9 +152,9 @@ paths:
             $ref: "#/definitions/Error"
       x-swagger-router-controller: "swagger_server.controllers.default_controller"
   /sequence:
-    post:
+    get:
       description: "Get sequence associated with an HLA allele or GFE notation"
-      operationId: "sequence_post"
+      operationId: "sequence_get"
       parameters:
       - name: "allele"
         in: "query"
@@ -202,9 +202,9 @@ paths:
             $ref: "#/definitions/Error"
       x-swagger-router-controller: "swagger_server.controllers.default_controller"
   /ars:
-    post:
+    get:
       description: "Get ARS group associated with a GFE notation or HLA allele"
-      operationId: "ars_post"
+      operationId: "ars_get"
       parameters:
       - name: "allele"
         in: "query"

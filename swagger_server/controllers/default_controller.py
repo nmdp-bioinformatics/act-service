@@ -20,9 +20,9 @@ if os.getenv("NEO4JUSER"):
     neo4j_user = os.getenv("NEO4JUSER")
 
 
-def act_post(locus, sequence, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
+def act_get(locus, sequence, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
     """
-    act_post
+    act_get
     Get HLA and GFE from consensus sequence
     :param locus: Valid HLA locus
     :type locus: str
@@ -49,9 +49,9 @@ def act_post(locus, sequence, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_u
     return allele_call
 
 
-def ars_post(allele, group, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
+def ars_get(allele, group, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
     """
-    ars_post
+    ars_get
     Get ARS group associated with a GFE notation or HLA allele
     :param allele: HLA allele or GFE Notation
     :type allele: str
@@ -75,9 +75,9 @@ def ars_post(allele, group, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_use
     return ars_call
 
 
-def gfe_post(hla, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
+def gfe_get(hla, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
     """
-    gfe_post
+    gfe_get
     Get GFE notation associated with an HLA allele
     :param hla: HLA allele
     :type hla: str
@@ -101,9 +101,9 @@ def gfe_post(hla, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, passwor
     return allele_call
 
 
-def hla_post(gfe, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
+def hla_get(gfe, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
     """
-    hla_post
+    hla_get
     Get HLA associated with GFE notation
     :param gfe: GFE Notation
     :type gfe: str
@@ -127,9 +127,9 @@ def hla_post(gfe, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, passwor
     return hla_call
 
 
-def sequence_post(allele, allele_type, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
+def sequence_get(allele, allele_type, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
     """
-    sequence_post
+    sequence_get
     Get sequence associated with an HLA allele or GFE notation
     :param allele: HLA allele or GFE notation
     :type allele: str
