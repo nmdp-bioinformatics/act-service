@@ -11,16 +11,24 @@ from py2neo import Graph
 from gfe_db.graph import GfeDB
 import os
 
-neo4j_pass = ''
+neo4jpass = ''
 if os.getenv("NEO4JPASS"):
-    neo4j_pass = os.getenv("NEO4JPASS")
+    neo4jpass = os.getenv("NEO4JPASS")
 
-neo4j_user = ''
+neo4juser = ''
 if os.getenv("NEO4JUSER"):
-    neo4j_user = os.getenv("NEO4JUSER")
+    neo4juser = os.getenv("NEO4JUSER")
+
+neo4jurl = "http://neo4j.b12x.org:80"
+if os.getenv("NEO4JURL"):
+    neo4jurl = os.getenv("NEO4JURL")
+
+gfeurl = "http://gfe.b12x.org"
+if os.getenv("GFEURL"):
+    gfeurl = os.getenv("GFEURL")
 
 
-def act_get(locus, sequence, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
+def act_get(locus, sequence, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, verbose=None):
     """
     act_get
     Get HLA and GFE from consensus sequence
@@ -45,11 +53,11 @@ def act_get(locus, sequence, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_us
     typer = GfeDB(graph, hostname=gfe_url)
     gfe_output = typer.type_hla(locus, sequence.upper())
     [gfe_new, hla, gfe] = [gfe_output[0], gfe_output[1], gfe_output[2]]
-    allele_call = AlleleCall(gfe=gfe_new, hla=hla, version='0.0.1')
+    allele_call = AlleleCall(gfe=gfe, hla=hla, version='0.0.1')
     return allele_call
 
 
-def ars_get(allele, group, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
+def ars_get(allele, group, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, verbose=None):
     """
     ars_get
     Get ARS group associated with a GFE notation or HLA allele
@@ -75,7 +83,7 @@ def ars_get(allele, group, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user
     return ars_call
 
 
-def gfe_get(hla, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
+def gfe_get(hla, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, verbose=None):
     """
     gfe_get
     Get GFE notation associated with an HLA allele
@@ -101,7 +109,7 @@ def gfe_get(hla, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password
     return allele_call
 
 
-def hla_get(gfe, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
+def hla_get(gfe, neo4j_url="http://neo4j.b12x.org:80", user=neo4juser, password=neo4jpass, gfe_url=gfeurl, verbose=None):
     """
     hla_get
     Get HLA associated with GFE notation
@@ -127,7 +135,7 @@ def hla_get(gfe, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password
     return hla_call
 
 
-def sequence_get(allele, allele_type, neo4j_url="http://neo4j.b12x.org:80", user=neo4j_user, password=neo4j_pass, gfe_url="gfe.b12x.org", verbose=None):
+def sequence_get(allele, allele_type, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, verbose=None):
     """
     sequence_get
     Get sequence associated with an HLA allele or GFE notation

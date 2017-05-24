@@ -1,7 +1,6 @@
 FROM ubuntu:14.04
 MAINTAINER Mike Halagan <mhalagan@nmdp.org>
 
-
 RUN apt-get update -q \
     && apt-get dist-upgrade -qy \
     && apt-get install -qyy wget curl build-essential cpp git \
