@@ -74,8 +74,8 @@ class GfeDB(object):
         lookup_query = sequence_search(locus, sequence)
         sequence_data = pa.DataFrame(self.graph.data(lookup_query))
         if not sequence_data.empty:
-            gfe_observed = [x for x in sequence_data["GFE"]]
-            hla = [x for x in sequence_data["HLA"]]
+            gfe_observed = list(set([x for x in sequence_data["GFE"]]))
+            hla = list(set([x for x in sequence_data["HLA"]]))
             g_groups = []
             for gfe in gfe_observed:
                 g_cypher = gfe_Ggroups(gfe)
