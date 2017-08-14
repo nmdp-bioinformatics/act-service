@@ -99,6 +99,13 @@ def hla_ars(group, hla):
     return(cyper_query)
 
 
+def gfe_ars(group, gfe):
+    matchq = "MATCH (group:" + group + ")-[:IN_GROUP]-(hla:IMGT)-[g:HAS_GFE]-(gfe:GFE) WHERE gfe.name = \"" + gfe + "\""
+    returnq = " RETURN DISTINCT group.name as ARS, hla.name AS HLA"
+    cyper_query = matchq + returnq
+    return(cyper_query)
+
+
 def get_sequence(seqtype, allele):
     seq_query = "MATCH (allele:" + seqtype + ")-[:HAS_FEATURE]-(seq:SEQUENCE)"
     seq_query1 = " WHERE allele.name = \"" + allele + "\""

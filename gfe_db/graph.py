@@ -13,6 +13,7 @@ from gfe_db.cypher import gfe_Ggroups
 from gfe_db.cypher import hla_Ggroups
 from gfe_db.cypher import hla_gfe
 from gfe_db.cypher import hla_ars
+from gfe_db.cypher import gfe_ars
 from gfe_db.cypher import get_sequence
 
 import pandas as pa
@@ -21,8 +22,11 @@ from swagger_client.rest import ApiException
 from swagger_client.api_client import ApiClient
 import os
 import glob
+import re
+import sys
 
 flatten = lambda l: [item for sublist in l for item in sublist]
+is_gfe = lambda x: True if re.search("\d+-\d+-\d+", x) else False
 
 
 class GfeDB(object):
@@ -91,7 +95,14 @@ class GfeDB(object):
             return ""
 
     def gfe_create(self, locus, sequence):
+        """
+        creates GFE from HLA sequence and locus
 
+        :param locus: string containing HLA locus.
+        :param sequence: string containing sequence data.
+
+        :return: GFEobject.
+        """
         try:
             r = self.api.gfe_post(locus=locus, sequence=sequence, verbose=1)
             gfe = r.gfe
@@ -259,13 +270,21 @@ class GfeDB(object):
         else:
             return ''
 
-    def ars_redux(self, group, hla):
-        hla_query = hla_ars(group, hla)
-        hla_data = pa.DataFrame(self.graph.data(hla_query))
-        if not hla_data.empty:
-            hla = [x for x in hla_data["ARS"]]
-            return hla
+    def ars_redux(self, group, typing):
+        if is_gfe(typing):
+            gfe_query = gfe_ars(group, typing)
+            gfe_data = pa.DataFrame(self.graph.data(gfe_query))
+            if not gfe_data.empty:
+                gfe = [x for x in gfe_data["ARS"]]
+                return gfe
+            else:
+                return ''
         else:
-            return ''
-
+            hla_query = hla_ars(group, typing)
+            hla_data = pa.DataFrame(self.graph.data(hla_query))
+            if not hla_data.empty:
+                hla = [x for x in hla_data["ARS"]]
+                return hla
+            else:
+                return ''
 
