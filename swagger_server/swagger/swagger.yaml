@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: "The Allele Calling  service provides an API for converting raw sequence\
     \ data to GFE and HLA allele calls."
-  version: "0.0.1"
+  version: "0.0.2"
   title: "Allele Calling Service"
   contact:
     email: "mhalagan@nmdp.org"
@@ -145,7 +145,7 @@ paths:
         200:
           description: "GFE notation associated with an HLA allele"
           schema:
-            $ref: "#/definitions/AlleleCall"
+            $ref: "#/definitions/GfeCall"
         404:
           description: "Failed to generate GFE from fasta"
           schema:
@@ -159,11 +159,6 @@ paths:
       - name: "allele"
         in: "query"
         description: "HLA allele or GFE notation"
-        required: true
-        type: "string"
-      - name: "allele_type"
-        in: "query"
-        description: "Specify whether it's IMGT or GFE"
         required: true
         type: "string"
       - name: "neo4j_url"
@@ -251,6 +246,71 @@ paths:
           schema:
             $ref: "#/definitions/Error"
       x-swagger-router-controller: "swagger_server.controllers.default_controller"
+  /feature_search:
+    get:
+      description: "GFE notation and HLA alleles associated with a specific feature sequence or HLA allele"
+      operationId: "feature_get"
+      parameters:
+      - name: "locus"
+        in: "query"
+        description: "HLA locus"
+        required: true
+        type: "string"
+      - name: "sequence"
+        in: "query"
+        description: "Sequence of HLA feature"
+        required: false
+        type: "string"
+      - name: "hla"
+        in: "query"
+        description: "HLA Allele"
+        required: false
+        type: "string"
+      - name: "rank"
+        in: "query"
+        description: "HLA feature rank"
+        required: false
+        type: "string"
+      - name: "type"
+        in: "query"
+        description: "HLA feature type"
+        required: false
+        type: "string"
+      - name: "neo4j_url"
+        in: "query"
+        description: "URL for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "user"
+        in: "query"
+        description: "Username for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "password"
+        in: "query"
+        description: "Password for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "gfe_url"
+        in: "query"
+        description: "URL for the gfe-service"
+        required: false
+        type: "string"
+      - name: "verbose"
+        in: "query"
+        description: "Flag for running service in verbose"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "ARS group associated with a GFE notation or HLA allele"
+          schema:
+            $ref: "#/definitions/ArsCall"
+        404:
+          description: "Failed to generate GFE from fasta"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"
 definitions:
   Error:
     type: "object"
@@ -292,11 +352,97 @@ definitions:
       version:
         type: "string"
     example:
-      gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-0"
+      gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
       hla:
       - "HLA-A*01:01:01:02"
       - "HLA-A*01:01:01:01"
       version: "0.0.1"
+
+  GfeCall:
+    type: "object"
+    properties:
+      share_ars:
+        type: "array"
+        items:
+          $ref: "#/definitions/Typing"
+      hla:
+        type: "string"
+      version:
+        type: "string"
+    example:
+      hla: "HLA-A*01:01:01:01"
+      gfe:
+      - "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-0"
+      share_ars:
+        - gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-0"
+          hla:
+          - "HLA-A*01:01:01:02"
+          - "HLA-A*01:01:01:01"
+      act_version: "0.0.1"
+      gfe_version: "0.0.1"
+      gfedb_version: "0.0.1"
+
+  Typing:
+    type: "object"
+    properties:
+      hla:
+        type: "array"
+        items:
+          type: "string"
+      gfe:
+        type: "string"
+    example:
+      gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-0"
+      hla:
+      - "HLA-A*01:01:01:02"
+      - "HLA-A*01:01:01:01"
+
+  AlleleCall:
+    type: "object"
+    properties:
+      closest:
+        type: "array"
+        items:
+          $ref: "#/definitions/ClosestTyping"
+      gfe:
+        type: "string"
+      version:
+        type: "string"
+    example:
+      gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
+      hla:
+      - "HLA-A*01:01:01:02"
+      - "HLA-A*01:01:01:01"
+      version: "0.0.1"
+
+  ClosestTyping:
+    type: "object"
+    properties:
+      hla:
+        type: "string"
+      gfe:
+        type: "string"
+      features_shared:
+        type: "number"
+      shares:
+        type: "array"
+        items:
+          $ref: "#/definitions/Feature"
+    example:
+      allele: "HLA-A*01:01:01:01"
+
+  Feature:
+    type: "object"
+    properties:
+      type:
+        type: "string"
+      rank:
+        type: "number"
+      accession:
+        type: "number"
+    example:
+      allele: "HLA-A*01:01:01:01"
+
   ArsCall:
     type: "object"
     properties:
@@ -306,6 +452,10 @@ definitions:
         type: "string"
       group:
         type: "string"
+      share_ars:
+        type: "array"
+        items:
+          $ref: "#/definitions/Typing"
       version:
         type: "string"
     example:
@@ -313,6 +463,7 @@ definitions:
       group_type: "G_GROUP"
       group: "HLA-A*01:01:01G"
       version: "0.0.1"
+
   Sequence:
     type: "object"
     properties:

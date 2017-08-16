@@ -23,7 +23,6 @@ from swagger_client.api_client import ApiClient
 import os
 import glob
 import re
-import sys
 
 flatten = lambda l: [item for sublist in l for item in sublist]
 is_gfe = lambda x: True if re.search("\d+-\d+-\d+", x) else False
@@ -74,7 +73,14 @@ class GfeDB(object):
                     return(gfe_new, "", "", "", 0)
 
     def sequence_lookup(self, locus, sequence):
+        """
+        Looks up sequence from
 
+        :param locus: string containing HLA locus.
+        :param sequence: string containing sequence data.
+
+        :return: GFEobject.
+        """
         lookup_query = sequence_search(locus, sequence)
         sequence_data = pa.DataFrame(self.graph.data(lookup_query))
         if not sequence_data.empty:
@@ -271,6 +277,7 @@ class GfeDB(object):
             return ''
 
     def ars_redux(self, group, typing):
+        # Have share_ars group
         if is_gfe(typing):
             gfe_query = gfe_ars(group, typing)
             gfe_data = pa.DataFrame(self.graph.data(gfe_query))
