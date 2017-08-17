@@ -28,7 +28,7 @@ flatten = lambda l: [item for sublist in l for item in sublist]
 is_gfe = lambda x: True if re.search("\d+-\d+-\d+", x) else False
 
 
-class GfeDB(object):
+class Act(object):
     '''
     classdocs
     '''
