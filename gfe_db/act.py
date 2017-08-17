@@ -16,6 +16,11 @@ from gfe_db.cypher import hla_ars
 from gfe_db.cypher import gfe_ars
 from gfe_db.cypher import get_sequence
 
+from swagger_server.models.feature import Feature
+from swagger_server.models.typing import Typing
+from swagger_server.models.gfe_typing import GfeTyping
+from swagger_server.models.allele_call import AlleleCall
+
 import pandas as pa
 import swagger_client
 from swagger_client.rest import ApiException
@@ -59,18 +64,23 @@ class Act(object):
 
         sequence_exists = self.sequence_lookup(locus, sequence)
         if sequence_exists:
-            return sequence_exists
+            return {'sequence_found': sequence_exists}
         else:
-            gfe_new = self.gfe_create(locus, sequence)
-            gfe_exists = self.gfe_lookup(gfe_new)
-            if gfe_exists:
-                return gfe_exists
+            gfe_notation = self.gfe_create(locus, sequence)
+            related_gfe = self.gfe_lookup(gfe_notation.gfe)
+            if related_gfe:
+                return {'gfe': gfe_notation, 'hla': related_gfe}
             else:
-                gfe_closest = self.find_similar_gfe(gfe_new)
-                if gfe_closest:
-                    return gfe_closest
+                ac_object = self.find_similar_gfe(gfe_notation)
+                if ac_object:
+                    ac_object.gfe = gfe_notation.gfe
+                    ac_object.features = [Feature(accession = f.accession,rank = f.rank,sequence = f.sequence, term = f.term) for f in gfe_notation.structure]
+                    ac_object.gfe_version = gfe_notation.version
+                    ac_object.act_version = '0.0.2'
+                    ac_object.gfedb_version = '0.0.2'
+                    return ac_object
                 else:
-                    return(gfe_new, "", "", "", 0)
+                    return {'gfe': gfe_notation}
 
     def sequence_lookup(self, locus, sequence):
         """
@@ -111,8 +121,7 @@ class Act(object):
         """
         try:
             r = self.api.gfe_post(locus=locus, sequence=sequence, verbose=1)
-            gfe = r.gfe
-            return(gfe)
+            return(r)
         except ApiException as e:
             print("Exception when calling DefaultApi->gfe_post: %s\n" % e)
             return ""
@@ -129,16 +138,17 @@ class Act(object):
             if not g_data.empty:
                 g_groups = [g for g in g_data["G_GROUP"]]
                 if len(g_groups) > 1 or len(g_groups) == 0:
-                    return(gfe, hla, gfe_observed, '', 99)
+                    return(hla, gfe_observed, '', 99)
                 else:
-                    return(gfe, hla, gfe_observed, g_groups[0], 99)
+                    return(hla, gfe_observed, g_groups[0], 99)
             else:
-                return(gfe, hla, gfe_observed, '', 99)
+                return(hla, gfe_observed, '', 99)
         else:
             return ""
 
-    def find_similar_gfe(self, gfe):
+    def find_similar_gfe(self, gfe_o):
 
+        gfe = gfe_o.gfe
         gfe_dict = self.breakup_gfe(gfe)
         [locus, feature_accessions] = gfe.split("w")
         groups_cypher = groups(locus, gfe_dict["exon-2"], gfe_dict["exon-3"])
@@ -154,48 +164,51 @@ class Act(object):
                     gfe_similarity.update({similar_data['GFE1'][i]: sim1})
                     gfe_similarity.update({similar_data['GFE2'][i]: sim2})
 
-                gfe_dict = {}
-                hla_dict = {}
+                found_hla = {}
                 max_val = max(gfe_similarity.values())
                 for gfes in gfe_similarity.keys():
                     if gfe_similarity[gfes] == max_val:
                         hlas = self.gfe2hla(gfes)
                         for hla in hlas:
-                            if hla not in hla_dict:
-                                hla_dict.update({hla: max_val})
-                            if gfes not in gfe_dict:
-                                gfe_dict.update({gfes: max_val})
+                            if hla not in found_hla:
 
-                gfe_array = [g for g in gfe_dict]
-                hla_array = [h for h in hla_dict]
+                                hla_typing = Typing(hla=hla, related_gfe=[GfeTyping(gfe=gfes)])
+                                found_hla.update({hla: hla_typing})
+                            else:
+                                hla_typing = found_hla[hla]
+                                hla_typing.related_gfe.append(GfeTyping(gfe=gfes))
 
-                g_groups = {}
-                for sim_gfe in gfe_array:
-                    g_cypher = gfe_Ggroups(sim_gfe)
-                    g_data = pa.DataFrame(self.graph.data(g_cypher))
-                    if not g_data.empty:
-                        for g in g_data["G_GROUP"]:
-                            g_groups.update({g: sim_gfe})
-                big_g = [g for g in g_groups]
-                if len(big_g) > 1 or len(big_g) == 0:
-                    return(gfe, hla_array, gfe_array, '', 99)
-                else:
-                    return(gfe, hla_array, gfe_array, big_g[0], 99)
+                ac = AlleleCall(typing=list(found_hla.values()))
+
+                return ac
+                # g_groups = {}
+                # for sim_gfe in gfe_array:
+                #     g_cypher = gfe_Ggroups(sim_gfe)
+                #     g_data = pa.DataFrame(self.graph.data(g_cypher))
+                #     if not g_data.empty:
+                #         for g in g_data["G_GROUP"]:
+                #             g_groups.update({g: sim_gfe})
+                # big_g = [g for g in g_groups]
+                # if len(big_g) > 1 or len(big_g) == 0:
+                #     return(hla_array, gfe_array, '', 99)
+                # else:
+                #     return(hla_array, gfe_array, big_g[0], 99)
             else:
-                g_groups = {}
-                hla_a = flatten(groups_data["HLA"])
-                for sim_hla in hla_a:
-                    g_cypher = hla_Ggroups(sim_hla)
-                    g_data = pa.DataFrame(self.graph.data(g_cypher))
-                    if not g_data.empty:
-                        for g in g_data["G_GROUP"]:
-                            if g not in g_groups:
-                                g_groups.update({g: sim_hla})
-                big_g = [g for g in g_groups]
-                if len(big_g) > 1 or len(big_g) == 0:
-                    return(gfe, hla_a, gfe, '', 99)
-                else:
-                    return(gfe, hla_a, gfe, big_g[0], 99)
+                print("No similar GFE")
+                #     g_groups = {}
+                #     hla_a = flatten(groups_data["HLA"])
+                #     for sim_hla in hla_a:
+                #         g_cypher = hla_Ggroups(sim_hla)
+                #         g_data = pa.DataFrame(self.graph.data(g_cypher))
+                #         if not g_data.empty:
+                #             for g in g_data["G_GROUP"]:
+                #                 if g not in g_groups:
+                #                     g_groups.update({g: sim_hla})
+                #     big_g = [g for g in g_groups]
+                #     if len(big_g) > 1 or len(big_g) == 0:
+                #         return (hla_a, gfe, '', 99)
+                #     else:
+                #         return(hla_a, gfe, big_g[0], 99)
         else:
             return ""
 

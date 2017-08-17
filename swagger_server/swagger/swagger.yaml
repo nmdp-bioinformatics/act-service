@@ -110,7 +110,7 @@ paths:
         200:
           description: "GFE notation associated with an HLA allele"
           schema:
-            $ref: "#/definitions/Typing"
+            $ref: "#/definitions/GfeCall"
         404:
           description: "Failed to generate GFE"
           schema:
@@ -532,8 +532,7 @@ definitions:
         type: string
     type: object
 
-
-  Typing:
+  GfeCall:
     type: "object"
     properties:
       hla:
@@ -548,6 +547,33 @@ definitions:
         type: "string"
       gfedb_version:
         type: "string"         
+    example:
+      hla: "HLA-A*01:01:01:01"
+      related_gfe:
+        - gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
+          features_shared: 4
+          shares:
+          - accession: 1
+            locus: HLA-A
+            rank: 1
+            term: exon
+            sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
+          - accession: 2
+            locus: HLA-A
+            rank: 1
+            term: intron
+            sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
+
+
+  Typing:
+    type: "object"
+    properties:
+      hla:
+        type: "string"
+      related_gfe:
+        type: "array"
+        items:
+          $ref: "#/definitions/GfeTyping"     
     example:
       hla: "HLA-A*01:01:01:01"
       related_gfe:

@@ -2,12 +2,12 @@
 
 from __future__ import absolute_import
 
-from swagger_server.models.inline_response200 import InlineResponse200
-from swagger_server.models.inline_response2001 import InlineResponse2001
-from swagger_server.models.inline_response2002 import InlineResponse2002
-from swagger_server.models.inline_response2003 import InlineResponse2003
-from swagger_server.models.inline_response200_typing import InlineResponse200Typing
-from swagger_server.models.inline_response404 import InlineResponse404
+from swagger_server.models.allele_call import AlleleCall
+from swagger_server.models.ars_call import ArsCall
+from swagger_server.models.error import Error
+from swagger_server.models.feature_call import FeatureCall
+from swagger_server.models.gfe_call import GfeCall
+from swagger_server.models.sequence_call import SequenceCall
 from . import BaseTestCase
 from six import BytesIO
 from flask import json
