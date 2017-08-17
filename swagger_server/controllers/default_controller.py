@@ -51,9 +51,9 @@ def act_get(locus, sequence, neo4j_url=neo4jurl, user=neo4juser, password=neo4jp
     """
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
     typer = Act(graph, hostname=gfe_url)
-    gfe_output = typer.type_hla(locus, sequence.upper())
-    [gfe_new, hla, gfe] = [gfe_output[0], gfe_output[1], gfe_output[2]]
-    allele_call = AlleleCall(gfe=gfe, hla=hla, version='0.0.1')
+    allele_call = typer.type_hla(locus, sequence.upper())
+    #[gfe_new, hla, gfe] = [gfe_output[0], gfe_output[1], gfe_output[2]]
+    #allele_call = AlleleCall(gfe=gfe, hla=hla, version='0.0.1')
     return allele_call
 
 

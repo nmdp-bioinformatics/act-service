@@ -75,7 +75,7 @@ class Act(object):
                 if ac_object:
                     ac_object.gfe = gfe_notation.gfe
                     ac_object.features = [Feature(accession = f.accession,rank = f.rank,sequence = f.sequence, term = f.term) for f in gfe_notation.structure]
-                    ac_object.gfe_version = gfe_notation.version
+                    ac_object.gfe_version = '0.0.2'
                     ac_object.act_version = '0.0.2'
                     ac_object.gfedb_version = '0.0.2'
                     return ac_object
@@ -149,6 +149,7 @@ class Act(object):
     def find_similar_gfe(self, gfe_o):
 
         gfe = gfe_o.gfe
+        features = gfe_o.structure
         gfe_dict = self.breakup_gfe(gfe)
         [locus, feature_accessions] = gfe.split("w")
         groups_cypher = groups(locus, gfe_dict["exon-2"], gfe_dict["exon-3"])
@@ -171,28 +172,22 @@ class Act(object):
                         hlas = self.gfe2hla(gfes)
                         for hla in hlas:
                             if hla not in found_hla:
-
-                                hla_typing = Typing(hla=hla, related_gfe=[GfeTyping(gfe=gfes)])
+                                matched_features = self.matching_features(gfe, gfes, self.map_structures(features))
+                                hla_typing = Typing(hla=hla, related_gfe=[GfeTyping(gfe=gfes, shares=matched_features, features_shared=len(matched_features))])
                                 found_hla.update({hla: hla_typing})
                             else:
                                 hla_typing = found_hla[hla]
-                                hla_typing.related_gfe.append(GfeTyping(gfe=gfes))
+                                matched_features = self.matching_features(gfe, gfes, self.map_structures(features))
+                                hla_typing.related_gfe.append(GfeTyping(gfe=gfes, shares=matched_features, features_shared=len(matched_features)))
+                                found_hla.update({hla: hla_typing})
 
                 ac = AlleleCall(typing=list(found_hla.values()))
+                ac.gfe_version = '0.0.2'
+                ac.act_version = '0.0.2'
+                ac.gfedb_version = '0.0.2'
 
                 return ac
-                # g_groups = {}
-                # for sim_gfe in gfe_array:
-                #     g_cypher = gfe_Ggroups(sim_gfe)
-                #     g_data = pa.DataFrame(self.graph.data(g_cypher))
-                #     if not g_data.empty:
-                #         for g in g_data["G_GROUP"]:
-                #             g_groups.update({g: sim_gfe})
-                # big_g = [g for g in g_groups]
-                # if len(big_g) > 1 or len(big_g) == 0:
-                #     return(hla_array, gfe_array, '', 99)
-                # else:
-                #     return(hla_array, gfe_array, big_g[0], 99)
+
             else:
                 print("No similar GFE")
                 #     g_groups = {}
@@ -211,6 +206,28 @@ class Act(object):
                 #         return(hla_a, gfe, big_g[0], 99)
         else:
             return ""
+
+    def map_structures(self, gfe_structs):
+
+        feat_map = {}
+        for feat in gfe_structs:
+            feat_name = "-".join([feat.term, str(feat.rank)])
+            feat_map.update({feat_name: feat.sequence})
+
+        return feat_map
+
+    def matching_features(self, gfe1, gfe2, structures):
+
+        gfe_parts1 = self.breakup_gfe(gfe1)
+        gfe_parts2 = self.breakup_gfe(gfe2)
+        feat_list = list()
+        for feat in gfe_parts1:
+            if gfe_parts1[feat] == gfe_parts2[feat]:
+                feat_term, feat_rank = feat.split('-')
+                shared_feat = Feature(term=feat_term, rank=feat_rank, sequence=structures[feat], accession = gfe_parts1[feat])
+                feat_list.append(shared_feat)
+
+        return(feat_list)
 
     def breakup_gfe(self, gfe):
         [locus, feature_accessions] = gfe.split("w")
