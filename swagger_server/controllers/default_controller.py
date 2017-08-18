@@ -27,7 +27,7 @@ neo4jurl = "http://neo4j.b12x.org:80"
 if os.getenv("NEO4JURL"):
     neo4jurl = os.getenv("NEO4JURL")
 
-gfeurl = "http://localhost:3000"
+gfeurl = "http://gfe.b12x.org"
 if os.getenv("GFEURL"):
     gfeurl = os.getenv("GFEURL")
 
