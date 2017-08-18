@@ -11,6 +11,10 @@ from py2neo import Graph
 from gfe_db.act import Act
 import os
 
+from io import StringIO
+from Bio import SeqIO
+
+
 neo4jpass = ''
 if os.getenv("NEO4JPASS"):
     neo4jpass = os.getenv("NEO4JPASS")
@@ -28,7 +32,7 @@ if os.getenv("GFEURL"):
     gfeurl = os.getenv("GFEURL")
 
 
-def act_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, gfe=None, verbose=None, persist=None):
+def act_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, format_type=None, gfe=None, verbose=None, persist=None):
     """
     act_get
     Get HLA and GFE from consensus sequence
@@ -56,7 +60,14 @@ def act_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=n
     if isinstance(allele_call, Error):
         return allele_call, 404
     else:
-        return allele_call
+        if format_type:
+            imgt_formatted = typer.typing_to_bioseq(allele_call, sequence)
+            imgt_fh = StringIO()
+            SeqIO.write(imgt_formatted, imgt_fh, format_type)
+            imgt_data = imgt_fh.getvalue()
+            return imgt_data, 200, {'Content-Type': 'text/plain; charset=utf-8' }
+        else:
+            return allele_call
 
 
 def ars_get(allele, group, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, verbose=None):

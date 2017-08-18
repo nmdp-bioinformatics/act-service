@@ -15,6 +15,9 @@ paths:
     get:
       description: "Get HLA and GFE from consensus sequence or GFE notation"
       operationId: "act_get"
+      produces:
+        - "application/json"
+        - "text/plain"
       parameters:
       - name: "locus"
         in: "query"
@@ -29,6 +32,11 @@ paths:
       - name: "gfe"
         in: "query"
         description: "GFE Notation"
+        required: false
+        type: "string"
+      - name: "format_type"
+        in: "query"
+        description: "Specify the data format that will be returned"
         required: false
         type: "string"
       - name: "neo4j_url"
@@ -627,6 +635,10 @@ definitions:
         type: "string"
       group:
         type: "string"
+      share_allele:
+        type: "array"
+        items:
+          $ref: "#/definitions/Typing"
       act_version:
         type: "string"
       gfedb_version:

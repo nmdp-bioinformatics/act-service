@@ -32,6 +32,14 @@ import glob
 import re
 import json
 
+from Bio import SeqIO
+from Bio.SeqFeature import SeqFeature, FeatureLocation
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+from collections import OrderedDict
+from Bio.Alphabet import IUPAC
+
+
 flatten = lambda l: [item for sublist in l for item in sublist]
 is_gfe = lambda x: True if re.search("\d+-\d+-\d+", x) else False
 
@@ -373,4 +381,34 @@ class Act(object):
                 return ars_call
             else:
                 return
+
+    def typing_to_bioseq(self, typing, sequence):
+
+        seqrecord = SeqRecord(Seq(sequence, IUPAC.unambiguous_dna), id="GFE1000.1", description="Typed with ACT Service")
+
+        source_feature = SeqFeature(FeatureLocation(0, len(str(seqrecord.seq))), type="source", strand=1)
+        seqrecord.annotations["sequence_version"] = 1
+        seqrecord.annotations["molecule_type"] = "DNA"
+        seqrecord.annotations["data_file_division"] = "HUM"
+        seqrecord.annotations["accessions"] = ['GFE1000.1']
+        seqrecord.features.append(source_feature)
+        seqrecord.features[0].qualifiers = OrderedDict([('organism', ['Homo sapiens']), ('mol_type', ['genomic DNA']), ('db_xref', ['taxon:9606'])])
+
+        for feat in typing.features:
+            start_pos = sequence.find(feat.sequence)
+            if len(seqrecord.features) == 1:
+                start_pos = 0
+
+            feat_type = feat.term
+            if feat_type == "five_prime_UTR" or feat_type == "three_prime_UTR":
+                feat_type = "UTR"
+            end_pos = start_pos + len(feat.sequence)
+            seq_feature = SeqFeature(FeatureLocation(start_pos, end_pos), type=feat_type, strand=1)
+            
+            if feat.term == 'exon' or feat.term == 'intron':
+                seq_feature.qualifiers = OrderedDict([('number', [feat.rank])])
+            seqrecord.features.append(seq_feature)
+
+        return seqrecord
+
 
