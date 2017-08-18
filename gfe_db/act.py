@@ -21,6 +21,7 @@ from swagger_server.models.feature import Feature
 from swagger_server.models.typing import Typing
 from swagger_server.models.gfe_typing import GfeTyping
 from swagger_server.models.allele_call import AlleleCall
+from swagger_server.models.ars_call import ArsCall
 
 import pandas as pa
 import swagger_client
@@ -295,20 +296,52 @@ class Act(object):
 
     def ars_redux(self, group, typing):
         # Have share_ars group
+
+        ars_call = ArsCall()
         if is_gfe(typing):
             gfe_query = gfe_ars(group, typing)
             gfe_data = pa.DataFrame(self.graph.data(gfe_query))
             if not gfe_data.empty:
-                gfe = [x for x in gfe_data["ARS"]]
-                return gfe
+                #hla = [x for x in gfe_data["ARS"]]
+                #hla = gfe[0]
+                found_hla = {}
+                for i in range(0, len(gfe_data['HLA'])):
+                    hla = gfe_data['HLA'][i]
+                    hla_typing = Typing(hla=hla)
+                    found_hla.update({hla: hla_typing})
+
+                ars_call.allele = typing
+                ars_call.group_type = group
+                ars_call.group = gfe_data["ARS"][0]
+                ars_call.share_allele = list(found_hla.values())
+                ars_call.act_version = '0.0.2'
+                ars_call.gfedb_version = '0.0.2'
+                return ars_call
             else:
                 return
         else:
             hla_query = hla_ars(group, typing)
             hla_data = pa.DataFrame(self.graph.data(hla_query))
             if not hla_data.empty:
-                hla = [x for x in hla_data["ARS"]]
-                return hla
+                found_hla = {}
+                for i in range(0, len(hla_data['HLA'])):
+                    hla = hla_data['HLA'][i]
+                    gfe = hla_data['GFE'][i]
+                    if hla not in found_hla:
+                        hla_typing = Typing(hla=hla, related_gfe=[GfeTyping(gfe=gfe)])
+                        found_hla.update({hla: hla_typing})
+                    else:
+                        hla_typing = found_hla[hla]
+                        hla_typing.related_gfe.append(GfeTyping(gfe=gfe))
+                        found_hla.update({hla: hla_typing})
+                
+                ars_call.allele = typing
+                ars_call.group_type = group
+                ars_call.group = hla_data["ARS"][0]
+                ars_call.share_allele = list(found_hla.values())
+                ars_call.act_version = '0.0.2'
+                ars_call.gfedb_version = '0.0.2'
+                return ars_call
             else:
                 return
 

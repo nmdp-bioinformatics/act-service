@@ -627,13 +627,7 @@ definitions:
         type: "string"
       group:
         type: "string"
-      share_ars:
-        type: "array"
-        items:
-          $ref: "#/definitions/Typing"
       act_version:
-        type: "string"
-      gfe_version:
         type: "string"
       gfedb_version:
         type: "string"
@@ -641,51 +635,6 @@ definitions:
       allele: "HLA-A*01:01:01:01"
       group_type: "G_GROUP"
       group: "HLA-A*01:01:01G"
-      share_ars:
-        - hla: "HLA-A*01:01:01:01"
-          related_gfe:
-            - gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
-              features_shared: 4
-              shares:
-              - accession: 1
-                locus: HLA-A
-                rank: 1
-                term: exon
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-              - accession: 2
-                locus: HLA-A
-                rank: 1
-                term: intron
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-        - hla: "HLA-A*01:01:01:02"
-          related_gfe:
-            - gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
-              features_shared: 4
-              shares:
-              - accession: 1
-                locus: HLA-A
-                rank: 1
-                term: exon
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-              - accession: 2
-                locus: HLA-A
-                rank: 1
-                term: intron
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-            - gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
-              features_shared: 4
-              shares:
-              - accession: 1
-                locus: HLA-A
-                rank: 1
-                term: exon
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-              - accession: 2
-                locus: HLA-A
-                rank: 1
-                term: intron
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
       act_version: "0.0.1"
-      gfe_version: "0.0.1"
       gfedb_version: "0.0.1"
 

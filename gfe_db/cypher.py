@@ -12,6 +12,7 @@ def get_features(gfe):
     q3 = "RETURN f.name AS term,f.rank AS rank,f1.accession AS accession,f.sequence AS sequence"
     return q1 + q2 + q3
 
+
 def sequence_search(locus, sequence):
     seq_query = "MATCH (hla:IMGT)-[:HAS_GFE]-(gfe:GFE)-[:HAS_FEATURE]-(seq:SEQUENCE)"
     seq_query1 = " WHERE seq.sequence = \"" + sequence + "\""
@@ -100,15 +101,15 @@ def hla_gfe(hla):
 
 
 def hla_ars(group, hla):
-    matchq = "MATCH (group:" + group + ")-[:IN_GROUP]-(hla:IMGT) WHERE hla.name = \"" + hla + "\""
-    returnq = " RETURN DISTINCT group.name as ARS"
+    matchq = "MATCH (group:" + group + ")-[:IN_GROUP]-(hla:IMGT)-[:HAS_GFE]-(g:GFE) WHERE hla.name = \"" + hla + "\""
+    returnq = " RETURN group.name as ARS, hla.name as HLA,g.name AS GFE"
     cyper_query = matchq + returnq
     return(cyper_query)
 
 
 def gfe_ars(group, gfe):
-    matchq = "MATCH (group:" + group + ")-[:IN_GROUP]-(hla:IMGT)-[g:HAS_GFE]-(gfe:GFE) WHERE gfe.name = \"" + gfe + "\""
-    returnq = " RETURN DISTINCT group.name as ARS, hla.name AS HLA"
+    matchq = "MATCH (group:" + group + ")-[:IN_GROUP]-(hla:IMGT)-[:HAS_GFE]-(g:GFE) WHERE g.name = \"" + gfe + "\""
+    returnq = " RETURN group.name as ARS, hla.name as HLA,g.name AS GFE"
     cyper_query = matchq + returnq
     return(cyper_query)
 

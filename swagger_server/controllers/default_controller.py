@@ -80,8 +80,7 @@ def ars_get(allele, group, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpas
     """
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
     typer = Act(graph, hostname=gfeurl)
-    ars_output = typer.ars_redux(group, allele)
-    ars_call = ArsCall(allele=allele, group_type=group, group=ars_output, version='0.0.1')
+    ars_call = typer.ars_redux(group, allele)
     return ars_call
 
 
