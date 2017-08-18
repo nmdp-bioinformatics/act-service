@@ -63,39 +63,60 @@ class Act(object):
                 features.append("-".join([feature, rank]))
                 self.structures.update({"HLA-" + locus: features})
 
-    def type_hla(self, locus, sequence):
+    def type_hla(self, locus, sequence, type_gfe):
 
         ac_object = AlleleCall()
         ac_object.act_version = '0.0.2'
         ac_object.gfedb_version = '0.0.2'
 
-        sequence_typing = self.sequence_lookup(locus, sequence)
-        if sequence_typing:
-            ac_object.typing = sequence_typing[0]
-            ac_object.gfe = sequence_typing[1]
-            ac_object.features = sequence_typing[2]
-            return ac_object
-        else:
-
-            gfe_o = self.gfe_create(locus, sequence)
-            if hasattr(gfe_o, 'body'):
-                error = json.loads(gfe_o.body)
-                error_o = Error()
-                for k in error:
-                    setattr(error_o, k.lower(), error[k])
-                return(error_o)
-
-            ac_object.gfe = gfe_o.gfe
-            ac_object.gfe_version = gfe_o.version
-            ac_object.features = [Feature(accession=f.accession, rank=f.rank, sequence=f.sequence, term=f.term) for f in gfe_o.structure]
-
-            related_gfe = self.gfe_lookup(gfe_o)
-            if related_gfe:
+        if type_gfe:
+            ac_object.gfe = type_gfe
+            seq_features = pa.DataFrame(self.graph.data(get_features(type_gfe)))
+            
+            if not seq_features.empty:
+                features = list()
+                for i in range(0, len(seq_features['term'])):
+                    feature = Feature(accession=seq_features['accession'][i], rank=seq_features['rank'][i], sequence=seq_features['sequence'][i], term=seq_features['term'][i])
+                    features.append(feature)
+                ac_object.features = features
+                related_gfe = self.gfe_lookup(type_gfe, ac_object.features)
                 ac_object.typing = related_gfe
             else:
-                ac_object.typing = self.find_similar_gfe(gfe_o, False)
+                seq_o = self.gfe_sequence(locus, type_gfe)
+                ac_object.features = [Feature(accession=f.accession, rank=f.rank, sequence=f.sequence, term=f.term) for f in seq_o.structure]
+                ac_object.typing = self.find_similar_gfe(type_gfe, ac_object.features)
 
             return ac_object
+        else:
+            sequence = sequence.upper()
+            sequence_typing = self.sequence_lookup(locus, sequence)
+            if sequence_typing:
+                ac_object.typing = sequence_typing[0]
+                ac_object.gfe = sequence_typing[1]
+                ac_object.features = sequence_typing[2]
+                return ac_object
+            else:
+
+                gfe_o = self.gfe_create(locus, sequence)
+                if hasattr(gfe_o, 'body'):
+                    error = json.loads(gfe_o.body)
+                    error_o = Error()
+                    for k in error:
+                        setattr(error_o, k.lower(), error[k])
+                    return(error_o)
+
+                ac_object.gfe = gfe_o.gfe
+                ac_object.gfe_version = gfe_o.version
+                ac_object.features = [Feature(accession=f.accession, rank=f.rank, sequence=f.sequence, term=f.term) for f in gfe_o.structure]
+
+                related_gfe = self.gfe_lookup(ac_object.gfe, ac_object.features)
+
+                if related_gfe:
+                    ac_object.typing = related_gfe
+                else:
+                    ac_object.typing = self.find_similar_gfe(ac_object.gfe, ac_object.features)
+
+                return ac_object
 
     def sequence_lookup(self, locus, sequence):
         """
@@ -106,7 +127,6 @@ class Act(object):
 
         :return: GFEobject.
         """
-
         lookup_query = sequence_search(locus, sequence)
         sequence_data = pa.DataFrame(self.graph.data(lookup_query))
         if not sequence_data.empty:
@@ -139,10 +159,23 @@ class Act(object):
             print("Exception when calling DefaultApi->gfe_post: %s\n" % e)
             return e
 
-    def gfe_lookup(self, gfe_o):
+    def gfe_sequence(self, locus, gfe):
+        """
+        creates GFE from HLA sequence and locus
 
-        gfe = gfe_o.gfe
-        features = [Feature(accession=f.accession, rank=f.rank, sequence=f.sequence, term=f.term) for f in gfe_o.structure]
+        :param locus: string containing HLA locus.
+        :param sequence: string containing sequence data.
+
+        :return: GFEobject.
+        """
+        try:
+            return self.api.sequence_post(locus=locus, gfe=gfe, verbose=1)
+        except ApiException as e:
+            print("Exception when calling DefaultApi->gfe_post: %s\n" % e)
+            return e
+
+    def gfe_lookup(self, gfe, features):
+
         gfe_data = pa.DataFrame(self.graph.data(gfe_search(gfe)))
         if not gfe_data.empty:
             typing_list = list()
@@ -152,10 +185,8 @@ class Act(object):
         else:
             return
 
-    def find_similar_gfe(self, gfe_o, take_all):
+    def find_similar_gfe(self, gfe, features):
 
-        gfe = gfe_o.gfe
-        features = gfe_o.structure
         gfe_dict = self.breakup_gfe(gfe)
         [locus, feature_accessions] = gfe.split("w")
         groups_cypher = groups(locus, gfe_dict["exon-2"], gfe_dict["exon-3"])
@@ -174,7 +205,7 @@ class Act(object):
                 found_hla = {}
                 max_val = max(gfe_similarity.values())
                 for gfes in gfe_similarity.keys():
-                    if gfe_similarity[gfes] == max_val or take_all:
+                    if gfe_similarity[gfes] == max_val:
                         hlas = self.gfe2hla(gfes)
                         for hla in hlas:
                             if hla not in found_hla:
@@ -302,8 +333,6 @@ class Act(object):
             gfe_query = gfe_ars(group, typing)
             gfe_data = pa.DataFrame(self.graph.data(gfe_query))
             if not gfe_data.empty:
-                #hla = [x for x in gfe_data["ARS"]]
-                #hla = gfe[0]
                 found_hla = {}
                 for i in range(0, len(gfe_data['HLA'])):
                     hla = gfe_data['HLA'][i]

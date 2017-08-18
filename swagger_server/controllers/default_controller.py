@@ -28,7 +28,7 @@ if os.getenv("GFEURL"):
     gfeurl = os.getenv("GFEURL")
 
 
-def act_get(locus, sequence, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, verbose=None, persist=None):
+def act_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, gfe=None, verbose=None, persist=None):
     """
     act_get
     Get HLA and GFE from consensus sequence
@@ -51,7 +51,7 @@ def act_get(locus, sequence, neo4j_url=neo4jurl, user=neo4juser, password=neo4jp
     """
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
     typer = Act(graph, hostname=gfeurl)
-    allele_call = typer.type_hla(locus, sequence.upper())
+    allele_call = typer.type_hla(locus, sequence, gfe)
 
     if isinstance(allele_call, Error):
         return allele_call, 404
