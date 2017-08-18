@@ -23,7 +23,7 @@ neo4jurl = "http://neo4j.b12x.org:80"
 if os.getenv("NEO4JURL"):
     neo4jurl = os.getenv("NEO4JURL")
 
-gfeurl = "http://gfe.b12x.org"
+gfeurl = "http://localhost:3000"
 if os.getenv("GFEURL"):
     gfeurl = os.getenv("GFEURL")
 
@@ -50,11 +50,13 @@ def act_get(locus, sequence, neo4j_url=neo4jurl, user=neo4juser, password=neo4jp
     :rtype: AlleleCall
     """
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
-    typer = Act(graph, hostname=gfe_url)
+    typer = Act(graph, hostname=gfeurl)
     allele_call = typer.type_hla(locus, sequence.upper())
-    #[gfe_new, hla, gfe] = [gfe_output[0], gfe_output[1], gfe_output[2]]
-    #allele_call = AlleleCall(gfe=gfe, hla=hla, version='0.0.1')
-    return allele_call
+
+    if isinstance(allele_call, Error):
+        return allele_call, 404
+    else:
+        return allele_call
 
 
 def ars_get(allele, group, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, verbose=None):
@@ -77,7 +79,7 @@ def ars_get(allele, group, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpas
     :rtype: ArsCall
     """
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
-    typer = Act(graph, hostname=gfe_url)
+    typer = Act(graph, hostname=gfeurl)
     ars_output = typer.ars_redux(group, allele)
     ars_call = ArsCall(allele=allele, group_type=group, group=ars_output, version='0.0.1')
     return ars_call
