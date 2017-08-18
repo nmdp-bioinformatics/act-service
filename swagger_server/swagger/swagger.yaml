@@ -17,6 +17,67 @@ paths:
       operationId: "act_get"
       produces:
         - "application/json"
+      parameters:
+      - name: "locus"
+        in: "query"
+        description: "Valid HLA locus"
+        required: true
+        type: "string"
+      - name: "sequence"
+        in: "query"
+        description: "Consensus sequence"
+        required: false
+        type: "string"
+      - name: "gfe"
+        in: "query"
+        description: "GFE Notation"
+        required: false
+        type: "string"
+      - name: "neo4j_url"
+        in: "query"
+        description: "URL for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "user"
+        in: "query"
+        description: "Username for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "password"
+        in: "query"
+        description: "Password for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "gfe_url"
+        in: "query"
+        description: "URL for the gfe-service"
+        required: false
+        type: "string"
+      - name: "verbose"
+        in: "query"
+        description: "Flag for running service in verbose"
+        required: false
+        type: "boolean"
+      - name: "persist"
+        in: "query"
+        description: "Flag for persisting the data in the GFE DB"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "HLA and GFE from consensus sequence"
+          schema:
+            $ref: "#/definitions/AlleleCall"
+        404:
+          description: "Failed to generate GFE"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+  /act_format:
+    get:
+      description: "Get HLA and GFE from consensus sequence or GFE notation"
+      operationId: "actformat_get"
+      produces:
         - "text/plain"
       parameters:
       - name: "locus"
@@ -78,7 +139,7 @@ paths:
           description: "Failed to generate GFE"
           schema:
             $ref: "#/definitions/Error"
-      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"  
   /gfe:
     get:
       description: "Get GFE notation associated with an HLA allele"

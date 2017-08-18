@@ -32,7 +32,7 @@ if os.getenv("GFEURL"):
     gfeurl = os.getenv("GFEURL")
 
 
-def act_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, format_type=None, gfe=None, verbose=None, persist=None):
+def actformat_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, format_type=None, gfe=None, verbose=None, persist=None):
     """
     act_get
     Get HLA and GFE from consensus sequence
@@ -60,14 +60,44 @@ def act_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=n
     if isinstance(allele_call, Error):
         return allele_call, 404
     else:
-        if format_type:
-            imgt_formatted = typer.typing_to_bioseq(allele_call, sequence)
-            imgt_fh = StringIO()
-            SeqIO.write(imgt_formatted, imgt_fh, format_type)
-            imgt_data = imgt_fh.getvalue()
-            return imgt_data, 200, {'Content-Type': 'text/plain; charset=utf-8' }
-        else:
-            return allele_call
+        imgt_formatted = typer.typing_to_bioseq(allele_call, sequence)
+        imgt_fh = StringIO()
+        SeqIO.write(imgt_formatted, imgt_fh, format_type)
+        imgt_data = imgt_fh.getvalue()
+        return imgt_data, 200, {'content-type': 'text/plain' }
+
+
+
+
+def act_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, gfe=None, verbose=None, persist=None):
+    """
+    act_get
+    Get HLA and GFE from consensus sequence
+    :param locus: Valid HLA locus
+    :type locus: str
+    :param sequence: Consensus sequence
+    :type sequence: str
+    :param neo4j_url: URL for the neo4j graph
+    :type neo4j_url: str
+    :param user: Username for the neo4j graph
+    :type user: str
+    :param pass: Password for the neo4j graph
+    :type pass: str
+    :param gfe_url: URL for the gfe-service
+    :type gfe_url: str
+    :param verbose: Flag for running service in verbose
+    :type verbose: bool
+
+    :rtype: AlleleCall
+    """
+    graph = Graph(neo4j_url, user=user, password=password, bolt=False)
+    typer = Act(graph, hostname=gfeurl)
+    allele_call = typer.type_hla(locus, sequence, gfe)
+
+    if isinstance(allele_call, Error):
+        return allele_call, 404
+    else:
+        return allele_call
 
 
 def ars_get(allele, group, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, verbose=None):
