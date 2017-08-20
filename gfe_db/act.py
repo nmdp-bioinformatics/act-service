@@ -337,6 +337,8 @@ class Act(object):
         # Have share_ars group
 
         ars_call = ArsCall()
+        ars_call.act_version = '0.0.2'
+        ars_call.gfedb_version = '0.0.2'
         if is_gfe(typing):
             gfe_query = gfe_ars(group, typing)
             gfe_data = pa.DataFrame(self.graph.data(gfe_query))
@@ -351,11 +353,9 @@ class Act(object):
                 ars_call.group_type = group
                 ars_call.group = gfe_data["ARS"][0]
                 ars_call.share_allele = list(found_hla.values())
-                ars_call.act_version = '0.0.2'
-                ars_call.gfedb_version = '0.0.2'
                 return ars_call
             else:
-                return
+                return ars_call
         else:
             hla_query = hla_ars(group, typing)
             hla_data = pa.DataFrame(self.graph.data(hla_query))
@@ -365,22 +365,20 @@ class Act(object):
                     hla = hla_data['HLA'][i]
                     gfe = hla_data['GFE'][i]
                     if hla not in found_hla:
-                        hla_typing = Typing(hla=hla, related_gfe=[GfeTyping(gfe=gfe)])
-                        found_hla.update({hla: hla_typing})
+                        typ = Typing(hla=hla, related_gfe=[GfeTyping(gfe=gfe)])
+                        found_hla.update({hla: typ})
                     else:
-                        hla_typing = found_hla[hla]
-                        hla_typing.related_gfe.append(GfeTyping(gfe=gfe))
-                        found_hla.update({hla: hla_typing})
-                
+                        typ = found_hla[hla]
+                        typ.related_gfe.append(GfeTyping(gfe=gfe))
+                        found_hla.update({hla: typ})
+
                 ars_call.allele = typing
                 ars_call.group_type = group
                 ars_call.group = hla_data["ARS"][0]
                 ars_call.share_allele = list(found_hla.values())
-                ars_call.act_version = '0.0.2'
-                ars_call.gfedb_version = '0.0.2'
                 return ars_call
             else:
-                return
+                return ars_call
 
     def typing_to_bioseq(self, typing, sequence):
 
