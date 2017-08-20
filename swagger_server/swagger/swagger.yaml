@@ -514,6 +514,10 @@ definitions:
         type: "array"
         items:
           $ref: "#/definitions/Feature"
+      ihiw_ref:
+        type: "array"
+        items:
+          $ref: "#/definitions/Typing"
       gfe:
         type: "string"
       act_version:

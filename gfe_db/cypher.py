@@ -5,6 +5,15 @@ Created on Feb 8, 2017
 '''
 
 
+def ref_query(alleles):
+    q1 = "MATCH(hla:IMGT)-[:HAS_GFE]-(gfe:GFE) "
+    q2 = "WHERE hla.name = \"" + alleles[0] + "\""
+    for i in range(1, len(alleles)):
+        q2 = q2 + " OR hla.name = \"" + alleles[i] + "\""
+    q3 = " RETURN hla.name AS HLA, gfe.name AS GFE"
+    return q1 + q2 + q3
+
+
 def get_features(gfe):
 
     q1 = "MATCH(gfe:GFE)-[f1:HAS_FEATURE]-(f:FEATURE)"
@@ -59,11 +68,9 @@ def similar_gfe_classI(gfe, exon2, exon3):
 
 
 def similar_kir(locus):
-
     query = "MATCH(gfe:GFE)" \
         + "WHERE gfe.locus = \"" + locus + "\"" \
         + "RETURN gfe.name AS GFE"
-
     return query
 
 
