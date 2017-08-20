@@ -6,7 +6,8 @@ Created on Feb 8, 2017
 
 from gfe_db.cypher import sequence_search
 from gfe_db.cypher import gfe_search
-from gfe_db.cypher import similar_gfe
+from gfe_db.cypher import similar_gfe_classI
+from gfe_db.cypher import similar_gfe_classII
 from gfe_db.cypher import gfe_hla
 from gfe_db.cypher import groups
 from gfe_db.cypher import hla_Ggroups
@@ -14,6 +15,7 @@ from gfe_db.cypher import hla_gfe
 from gfe_db.cypher import hla_ars
 from gfe_db.cypher import gfe_ars
 from gfe_db.cypher import get_sequence
+from gfe_db.cypher import similar_kir
 from gfe_db.cypher import get_features
 
 from swagger_server.models.error import Error
@@ -39,9 +41,11 @@ from Bio.SeqRecord import SeqRecord
 from collections import OrderedDict
 from Bio.Alphabet import IUPAC
 
-
 flatten = lambda l: [item for sublist in l for item in sublist]
 is_gfe = lambda x: True if re.search("\d+-\d+-\d+", x) else False
+is_kir = lambda x: True if re.search("KIR", x) else False
+is_classII = lambda x: True if re.search("HLA-D", x) else False
+is_classI = lambda x: True if re.search("HLA-\Dw", x) else False
 
 
 class Act(object):
@@ -69,7 +73,10 @@ class Act(object):
                 line.strip('\n')
                 [feature, rank] = line.split("\t")
                 features.append("-".join([feature, rank]))
-                self.structures.update({"HLA-" + locus: features})
+                if is_kir(locus):
+                    self.structures.update({locus: features})
+                else:
+                    self.structures.update({"HLA-" + locus: features})
 
     def type_hla(self, locus, sequence, type_gfe):
 
@@ -92,8 +99,7 @@ class Act(object):
             else:
                 seq_o = self.gfe_sequence(locus, type_gfe)
                 ac_object.features = [Feature(accession=f.accession, rank=f.rank, sequence=f.sequence, term=f.term) for f in seq_o.structure]
-                ac_object.typing = self.find_similar_gfe(type_gfe, ac_object.features)
-
+                ac_object.typing = self.find_similar(ac_object.gfe, ac_object.features)
             return ac_object
         else:
             sequence = sequence.upper()
@@ -111,7 +117,7 @@ class Act(object):
                     error_o = Error()
                     for k in error:
                         setattr(error_o, k.lower(), error[k])
-                    return(error_o)
+                    return error_o
 
                 ac_object.gfe = gfe_o.gfe
                 ac_object.gfe_version = gfe_o.version
@@ -122,8 +128,7 @@ class Act(object):
                 if related_gfe:
                     ac_object.typing = related_gfe
                 else:
-                    ac_object.typing = self.find_similar_gfe(ac_object.gfe, ac_object.features)
-
+                    ac_object.typing = self.find_similar(ac_object.gfe, ac_object.features)
                 return ac_object
 
     def sequence_lookup(self, locus, sequence):
@@ -147,7 +152,6 @@ class Act(object):
                 features.append(feature)
 
             typing = Typing(hla=hla[0], related_gfe=[GfeTyping(gfe=gfe[0], shares=features, features_shared=len(features))])
-  
             return [typing, gfe[0], features]
         else:
             return
@@ -179,7 +183,7 @@ class Act(object):
         try:
             return self.api.sequence_post(locus=locus, gfe=gfe, verbose=1)
         except ApiException as e:
-            print("Exception when calling DefaultApi->gfe_post: %s\n" % e)
+            print("Exception when calling DefaultApi->sequence_post: %s\n" % e)
             return e
 
     def gfe_lookup(self, gfe, features):
@@ -193,44 +197,126 @@ class Act(object):
         else:
             return
 
-    def find_similar_gfe(self, gfe, features):
+    def get_class(self, gfe):
+
+        [loc, accessions] = gfe.split("w")
+        if loc in self.loci:
+            return self.loci[loc]
+        return
+
+    def find_similar(self, gfe, features):
+
+        if is_classI(gfe):
+            return self.find_gfe_classI(gfe, features)
+        elif is_classII(gfe):
+            return self.find_gfe_classII(gfe, features)
+        elif is_kir(gfe):
+            return self.find_gfe_kir(gfe, features)
+        else:
+            return
+
+    def find_gfe_classI(self, gfe, features):
 
         gfe_dict = self.breakup_gfe(gfe)
         [locus, feature_accessions] = gfe.split("w")
-        groups_cypher = groups(locus, gfe_dict["exon-2"], gfe_dict["exon-3"])
-        groups_data = pa.DataFrame(self.graph.data(groups_cypher))
-        if not len(groups_data["HLA"][0]) == 0:
-            cypher = similar_gfe(gfe, gfe_dict["exon-2"], gfe_dict["exon-3"])
-            similar_data = pa.DataFrame(self.graph.data(cypher))
-            if not similar_data.empty:
-                gfe_similarity = {}
-                for i in range(0, len(similar_data['GFE1'])):
-                    sim1 = self.calcDiff(similar_data['GFE1'][i], gfe)
-                    sim2 = self.calcDiff(similar_data['GFE2'][i], gfe)
-                    gfe_similarity.update({similar_data['GFE1'][i]: sim1})
-                    gfe_similarity.update({similar_data['GFE2'][i]: sim2})
+        cypher = similar_gfe_classI(gfe, gfe_dict["exon-2"], gfe_dict["exon-3"])
+        similar_data = pa.DataFrame(self.graph.data(cypher))
+        if not similar_data.empty:
+            gfe_similarity = {}
+            for i in range(0, len(similar_data['GFE1'])):
+                sim1 = self.calcDiff(similar_data['GFE1'][i], gfe)
+                sim2 = self.calcDiff(similar_data['GFE2'][i], gfe)
+                gfe_similarity.update({similar_data['GFE1'][i]: sim1})
+                gfe_similarity.update({similar_data['GFE2'][i]: sim2})
 
-                found_hla = {}
-                max_val = max(gfe_similarity.values())
-                for gfes in gfe_similarity.keys():
-                    if gfe_similarity[gfes] == max_val:
-                        hlas = self.gfe2hla(gfes)
-                        for hla in hlas:
-                            if hla not in found_hla:
-                                matched_features = self.matching_features(gfe, gfes, self.map_structures(features))
-                                hla_typing = Typing(hla=hla, related_gfe=[GfeTyping(gfe=gfes, shares=matched_features, features_shared=len(matched_features))])
-                                found_hla.update({hla: hla_typing})
-                            else:
-                                hla_typing = found_hla[hla]
-                                matched_features = self.matching_features(gfe, gfes, self.map_structures(features))
-                                hla_typing.related_gfe.append(GfeTyping(gfe=gfes, shares=matched_features, features_shared=len(matched_features)))
-                                found_hla.update({hla: hla_typing})
+            found_hla = {}
+            max_val = max(gfe_similarity.values())
+            for gfes in gfe_similarity.keys():
+                if gfe_similarity[gfes] == max_val:
+                    hlas = self.gfe2hla(gfes)
+                    for hla in hlas:
+                        if hla not in found_hla:
+                            matched_features = self.matching_features(gfe, gfes, self.map_structures(features))
+                            hla_typing = Typing(hla=hla, related_gfe=[GfeTyping(gfe=gfes, shares=matched_features, features_shared=len(matched_features))])
+                            found_hla.update({hla: hla_typing})
+                        else:
+                            hla_typing = found_hla[hla]
+                            matched_features = self.matching_features(gfe, gfes, self.map_structures(features))
+                            hla_typing.related_gfe.append(GfeTyping(gfe=gfes, shares=matched_features, features_shared=len(matched_features)))
+                            found_hla.update({hla: hla_typing})
 
-                typing_list = list(found_hla.values())
-                return typing_list
+            typing_list = list(found_hla.values())
+            return typing_list
+        else:
+            return list()
 
-            else:
-                return list()
+    def find_gfe_classII(self, gfe, features):
+
+        gfe_dict = self.breakup_gfe(gfe)
+        [locus, feature_accessions] = gfe.split("w")
+        cypher = similar_gfe_classII(gfe, gfe_dict["exon-2"])
+        similar_data = pa.DataFrame(self.graph.data(cypher))
+        if not similar_data.empty:
+            gfe_similarity = {}
+            for i in range(0, len(similar_data['GFE1'])):
+                sim1 = self.calcDiff(similar_data['GFE1'][i], gfe)
+                sim2 = self.calcDiff(similar_data['GFE2'][i], gfe)
+                gfe_similarity.update({similar_data['GFE1'][i]: sim1})
+                gfe_similarity.update({similar_data['GFE2'][i]: sim2})
+
+            found_hla = {}
+            max_val = max(gfe_similarity.values())
+            for gfes in gfe_similarity.keys():
+                if gfe_similarity[gfes] == max_val:
+                    hlas = self.gfe2hla(gfes)
+                    for hla in hlas:
+                        if hla not in found_hla:
+                            matched_features = self.matching_features(gfe, gfes, self.map_structures(features))
+                            hla_typing = Typing(hla=hla, related_gfe=[GfeTyping(gfe=gfes, shares=matched_features, features_shared=len(matched_features))])
+                            found_hla.update({hla: hla_typing})
+                        else:
+                            hla_typing = found_hla[hla]
+                            matched_features = self.matching_features(gfe, gfes, self.map_structures(features))
+                            hla_typing.related_gfe.append(GfeTyping(gfe=gfes, shares=matched_features, features_shared=len(matched_features)))
+                            found_hla.update({hla: hla_typing})
+
+            typing_list = list(found_hla.values())
+            return typing_list
+
+        else:
+            return list()
+
+    def find_gfe_kir(self, gfe, features):
+
+        [locus, feature_accessions] = gfe.split("w")
+
+        cypher = similar_kir(locus)
+        similar_data = pa.DataFrame(self.graph.data(cypher))
+        if not similar_data.empty:
+            gfe_similarity = {}
+            for i in range(0, len(similar_data['GFE'])):
+                sim1 = self.calcDiff(similar_data['GFE'][i], gfe)
+                gfe_similarity.update({similar_data['GFE'][i]: sim1})
+
+            found_hla = {}
+            max_val = max(gfe_similarity.values())
+            for gfes in gfe_similarity.keys():
+                if gfe_similarity[gfes] == max_val:
+                    hlas = self.gfe2hla(gfes)
+                    for hla in hlas:
+                        if hla not in found_hla:
+                            matched_features = self.matching_features(gfe, gfes, self.map_structures(features))
+                            hla_typing = Typing(hla=hla, related_gfe=[GfeTyping(gfe=gfes, shares=matched_features, features_shared=len(matched_features))])
+                            found_hla.update({hla: hla_typing})
+                        else:
+                            hla_typing = found_hla[hla]
+                            matched_features = self.matching_features(gfe, gfes, self.map_structures(features))
+                            hla_typing.related_gfe.append(GfeTyping(gfe=gfes, shares=matched_features, features_shared=len(matched_features)))
+                            found_hla.update({hla: hla_typing})
+
+            typing_list = list(found_hla.values())
+            return typing_list
+
         else:
             return list()
 
@@ -382,8 +468,9 @@ class Act(object):
 
     def typing_to_bioseq(self, typing, sequence):
 
+        # TODO: Add more annotation and qualifiers
+        # TODO: Use the full sequence accession as the ID
         seqrecord = SeqRecord(Seq(sequence, IUPAC.unambiguous_dna), id="GFE1000.1", description="Typed with ACT Service")
-
         source_feature = SeqFeature(FeatureLocation(0, len(str(seqrecord.seq))), type="source", strand=1)
         seqrecord.annotations["sequence_version"] = 1
         seqrecord.annotations["molecule_type"] = "DNA"

@@ -27,7 +27,7 @@ neo4jurl = "http://neo4j.b12x.org:80"
 if os.getenv("NEO4JURL"):
     neo4jurl = os.getenv("NEO4JURL")
 
-gfeurl = "http://gfe.b12x.org"
+gfeurl = "http://localhost:3000"
 if os.getenv("GFEURL"):
     gfeurl = os.getenv("GFEURL")
 
@@ -65,8 +65,6 @@ def actformat_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, pass
         SeqIO.write(imgt_formatted, imgt_fh, format_type)
         imgt_data = imgt_fh.getvalue()
         return imgt_data, 200, {'content-type': 'text/plain' }
-
-
 
 
 def act_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, gfe=None, verbose=None, persist=None):
