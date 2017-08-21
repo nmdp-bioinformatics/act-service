@@ -27,12 +27,12 @@ neo4jurl = "http://neo4j.b12x.org:80"
 if os.getenv("NEO4JURL"):
     neo4jurl = os.getenv("NEO4JURL")
 
-gfeurl = "http://localhost:3000"
+gfeurl = "http://gfe.b12x.org"
 if os.getenv("GFEURL"):
     gfeurl = os.getenv("GFEURL")
 
 
-def actformat_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, format_type=None, gfe=None, verbose=None, persist=None):
+def actformat_get(locus, format_type, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, gfe=None, verbose=None, persist=None):
     """
     act_get
     Get HLA and GFE from consensus sequence
@@ -60,7 +60,7 @@ def actformat_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, pass
     if isinstance(allele_call, Error):
         return allele_call, 404
     else:
-        imgt_formatted = typer.typing_to_bioseq(allele_call, sequence)
+        imgt_formatted = typer.typing_to_bioseq(allele_call)
         imgt_fh = StringIO()
         SeqIO.write(imgt_formatted, imgt_fh, format_type)
         imgt_data = imgt_fh.getvalue()
@@ -91,7 +91,6 @@ def act_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=n
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
     typer = Act(graph, hostname=gfeurl)
     allele_call = typer.type_hla(locus, sequence, gfe)
-
     if isinstance(allele_call, Error):
         return allele_call, 404
     else:
@@ -120,7 +119,10 @@ def ars_get(allele, group, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpas
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
     typer = Act(graph, hostname=gfeurl)
     ars_call = typer.ars_redux(group, allele)
-    return ars_call
+    if isinstance(ars_call, Error):
+        return ars_call, 404
+    else:
+        return ars_call
 
 
 def gfe_get(hla, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, verbose=None):
@@ -144,12 +146,11 @@ def gfe_get(hla, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url
     """
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
     typer = Act(graph, hostname=gfe_url)
-    gfe_output = typer.get_gfe(hla)
-    allele_call = AlleleCall(gfe=hla, hla=gfe_output, version='0.0.1')
-    return allele_call
+    gfe_call = typer.get_gfe_call(hla)
+    return gfe_call
 
 
-def feature_get(hla, feature, neo4j_url=None, user=None, password=None, gfe_url=None, verbose=None):
+def feature_get(hla, feature, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, verbose=None):
     """
     feature_get
     GFE notation and HLA alleles associated with an HLA allele or alleles
@@ -170,34 +171,11 @@ def feature_get(hla, feature, neo4j_url=None, user=None, password=None, gfe_url=
 
     :rtype: InlineResponse2003
     """
-    return 'do some magic!'
+    graph = Graph(neo4j_url, user=user, password=password, bolt=False)
+    typer = Act(graph, hostname=gfeurl)
+    feature_call = typer.search_features(hla, feature)
+    if isinstance(feature_call, Error):
+        return feature_call, 404
+    else:
+        return feature_call
 
-
-def seqsrch_get(locus, start=None, end=None, hla=None, feature=None, neo4j_url=None, user=None, password=None, gfe_url=None, verbose=None):
-    """
-    seqsrch_get
-    Sequence data associated from a specific feature or HLA allele
-    :param locus: HLA locus
-    :type locus: str
-    :param start: Starting point of sequence
-    :type start: int
-    :param end: End point of sequence
-    :type end: int
-    :param hla: HLA Allele
-    :type hla: List[str]
-    :param feature: HLA feature rank
-    :type feature: str
-    :param neo4j_url: URL for the neo4j graph
-    :type neo4j_url: str
-    :param user: Username for the neo4j graph
-    :type user: str
-    :param password: Password for the neo4j graph
-    :type password: str
-    :param gfe_url: URL for the gfe-service
-    :type gfe_url: str
-    :param verbose: Flag for running service in verbose
-    :type verbose: bool
-
-    :rtype: InlineResponse2002
-    """
-    return 'do some magic!'

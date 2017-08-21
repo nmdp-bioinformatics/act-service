@@ -17,12 +17,15 @@ from gfe_db.cypher import get_sequence
 from gfe_db.cypher import similar_kir
 from gfe_db.cypher import get_features
 from gfe_db.cypher import ref_query
+from gfe_db.cypher import search_hla_features
 
 from swagger_server.models.error import Error
 from swagger_server.models.feature import Feature
 from swagger_server.models.typing import Typing
+from swagger_server.models.gfe_call import GfeCall
 from swagger_server.models.gfe_typing import GfeTyping
 from swagger_server.models.allele_call import AlleleCall
+from swagger_server.models.feature_call import FeatureCall
 from swagger_server.models.ars_call import ArsCall
 
 import pandas as pa
@@ -58,6 +61,7 @@ class Act(object):
         Constructor
         '''
         self.graph = graph
+        self.version = '0.0.3'
         api_client = ApiClient(host=hostname)
         self.api = swagger_client.DefaultApi(api_client=api_client)
         structure_dir = os.path.dirname(__file__)
@@ -98,24 +102,26 @@ class Act(object):
     def type_hla(self, locus, sequence, type_gfe):
 
         ac_object = AlleleCall()
-        ac_object.act_version = '0.0.2'
+        ac_object.act_version = self.version
         ac_object.gfedb_version = '0.0.2'
 
         if type_gfe:
             ac_object.gfe = type_gfe
             seq_features = pa.DataFrame(self.graph.data(get_features(type_gfe)))
-            
             if not seq_features.empty:
                 features = list()
                 for i in range(0, len(seq_features['term'])):
                     feature = Feature(accession=seq_features['accession'][i], rank=seq_features['rank'][i], sequence=seq_features['sequence'][i], term=lc(seq_features['term'][i]))
                     features.append(feature)
+                seq_o = self.gfe_sequence(locus, type_gfe)
+                ac_object.full_gene = Feature(rank="1", sequence=seq_o.sequence, term="gene")
                 ac_object.features = features
                 ac_object.ihiw_ref = self.get_ref_allele(locus, type_gfe, ac_object.features)
                 related_gfe = self.gfe_lookup(type_gfe, ac_object.features)
                 ac_object.typing = related_gfe
             else:
                 seq_o = self.gfe_sequence(locus, type_gfe)
+                ac_object.full_gene = Feature(rank="1", sequence=seq_o.sequence, term="gene")
                 ac_object.features = [Feature(accession=f.accession, rank=f.rank, sequence=f.sequence, term=lc(f.term)) for f in seq_o.structure]
                 ac_object.ihiw_ref = self.get_ref_allele(locus, type_gfe, ac_object.features)
                 ac_object.typing = self.find_similar(ac_object.gfe, ac_object.features)
@@ -127,6 +133,7 @@ class Act(object):
                 ac_object.typing = sequence_typing[0]
                 ac_object.gfe = sequence_typing[1]
                 ac_object.features = sequence_typing[2]
+                ac_object.full_gene = Feature(rank="1", sequence=sequence, term="gene")
                 ac_object.ihiw_ref = self.get_ref_allele(locus, ac_object.gfe, ac_object.features)
                 return ac_object
             else:
@@ -140,6 +147,7 @@ class Act(object):
                     return error_o
 
                 ac_object.gfe = gfe_o.gfe
+                ac_object.full_gene = Feature(accession=gfe_o.fullgene.accession, rank=gfe_o.fullgene.rank, sequence=gfe_o.fullgene.sequence, term=gfe_o.fullgene.term)
                 ac_object.gfe_version = gfe_o.version
                 ac_object.ihiw_ref = self.get_ref_allele(locus, ac_object.gfe, gfe_o.structure)
                 ac_object.features = [Feature(accession=f.accession, rank=f.rank, sequence=f.sequence, term=f.term) for f in gfe_o.structure]
@@ -412,6 +420,12 @@ class Act(object):
 
         return count
 
+    def get_gfe_call(self, hla):
+        gfe = self.get_gfe(hla)
+        gfe_c = GfeCall(hla=gfe, act_version=self.version,
+                        gfedb_version='0.0.2')
+        return gfe_c
+
     def get_gfe(self, hla):
         gfe_query = hla_gfe(hla)
         gfe_data = pa.DataFrame(self.graph.data(gfe_query))
@@ -443,7 +457,7 @@ class Act(object):
         # Have share_ars group
 
         ars_call = ArsCall()
-        ars_call.act_version = '0.0.2'
+        ars_call.act_version = self.version
         ars_call.gfedb_version = '0.0.2'
         if is_gfe(typing):
             gfe_query = gfe_ars(group, typing)
@@ -486,16 +500,21 @@ class Act(object):
             else:
                 return ars_call
 
-    def typing_to_bioseq(self, typing, sequence):
+    def typing_to_bioseq(self, typing):
 
         # TODO: Add more annotation and qualifiers
         # TODO: Use the full sequence accession as the ID
-        seqrecord = SeqRecord(Seq(sequence, IUPAC.unambiguous_dna), id="GFE1000.1", description="Typed with ACT Service")
+        sequence = typing.full_gene.sequence
+        seqid = 'GFE'
+        if hasattr(typing.full_gene, 'accession'):
+            seqid = 'GFEw' + str(typing.full_gene.accession)
+        seqrecord = SeqRecord(Seq(sequence, IUPAC.unambiguous_dna), id=seqid, description="Typed with ACT Service " + self.version)
         source_feature = SeqFeature(FeatureLocation(0, len(str(seqrecord.seq))), type="source", strand=1)
         seqrecord.annotations["sequence_version"] = 1
         seqrecord.annotations["molecule_type"] = "DNA"
         seqrecord.annotations["data_file_division"] = "HUM"
-        seqrecord.annotations["accessions"] = ['GFE1000.1']
+        if hasattr(typing.full_gene, 'accession'):
+            seqrecord.annotations["accessions"] = [seqid]
         seqrecord.features.append(source_feature)
         seqrecord.features[0].qualifiers = OrderedDict([('organism', ['Homo sapiens']), ('mol_type', ['genomic DNA']), ('db_xref', ['taxon:9606'])])
 
@@ -518,6 +537,7 @@ class Act(object):
 
     def get_ref_allele(self, locus, gfe, features):
 
+        # TODO: Add ihiw reference allele
         hla_sim = {}
         gfe_mapped = {}
         for i in range(0, len(self.ref_gfe[locus]['HLA'])):
@@ -545,6 +565,50 @@ class Act(object):
                         found_hla.update({hla: hla_typing})
 
         return list(found_hla.values())
+
+    def get_gfe_features(self, hlas, features):
+
+        gfe_features = {}
+        for hla in hlas:
+            gfes = self.get_gfe(hla)
+            for gfe in gfes:
+                gfe_parts = self.breakup_gfe(gfe)
+                for feat in features:
+                    f = lc(feat)
+                    if not f in gfe_features:
+                        gfe_features.update({f: [gfe_parts[f]]})
+                    else:
+                        fa = gfe_features[f]
+                        if not gfe_parts[f] in fa:
+                            fa.append(gfe_parts[f])
+                            gfe_features[f] = fa
+        return gfe_features
+
+    def search_features(self, hlas, features):
+
+        [locus, allele] = hlas[0].split("*")
+        search_feats = self.get_gfe_features(hlas, features)
+        feat_query = search_hla_features("HLA-A", search_feats)
+        feat_data = pa.DataFrame(self.graph.data(feat_query))
+        fc = FeatureCall(alleles=hlas, features_searched=features,
+                         act_version=self.version, gfedb_version='0.0.2')
+        found_hla = {}
+        if not feat_data.empty:
+            for i in range(0, len(feat_data['HLA'])):
+                hla = feat_data['HLA'][i]
+                gfe = feat_data['GFE'][i]
+                if hla not in found_hla:
+                    hla_typing = Typing(hla=hla,
+                                        related_gfe=[GfeTyping(gfe=gfe)])
+                    found_hla.update({hla: hla_typing})
+                else:
+                    hla_typing = found_hla[hla]
+                    hla_typing.related_gfe.append(GfeTyping(gfe=gfe))
+                    found_hla.update({hla: hla_typing})
+            fc.matched = list(found_hla.values())
+            return fc
+        else:
+            return fc
 
 
 

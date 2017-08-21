@@ -5,6 +5,35 @@ Created on Feb 8, 2017
 '''
 
 
+def search_hla_features(locus, gfe_feats):
+
+    match = "MATCH(hla:IMGT)-[:HAS_GFE]-(gfe:GFE)-[f1:HAS_FEATURE]-(feat1:FEATURE)"
+    if(len(gfe_feats)) > 1:
+        for i in range(1, len(gfe_feats)):
+            j = i + 1
+            match = match + ",(hla:IMGT)-[:HAS_GFE]-(gfe:GFE)-[f" + str(j) + ":HAS_FEATURE]-(feat" + str(j) + ":FEATURE)"
+
+    i = 1
+    feat_q = "WHERE hla.locus = \"" + locus + "\""
+
+    for feat in gfe_feats:
+        [term, rank] = feat.split("-")
+        feat_q = feat_q + " AND feat" + str(i) + ".name = \"" + term.upper() + "\""
+        feat_q = feat_q + " AND feat" + str(i) + ".rank = \"" + rank + "\""
+        acc_q = " AND( f" + str(i) + ".accession = \"" + gfe_feats[feat][0] + "\""
+        if(len(gfe_feats[feat]) == 1):
+            acc_q = acc_q + ")"
+        else:
+            for j in range(1, len(gfe_feats[feat])):
+                acc_q = acc_q + " OR f" + str(i) + ".accession = \"" + gfe_feats[feat][j] + "\""
+            acc_q = acc_q + ")"
+        feat_q = feat_q + acc_q
+        i += 1
+
+    return_q = " RETURN DISTINCT hla.name AS HLA, gfe.name AS GFE"
+    return match + feat_q + return_q
+
+
 def ref_query(alleles):
     q1 = "MATCH(hla:IMGT)-[:HAS_GFE]-(gfe:GFE) "
     q2 = "WHERE hla.name = \"" + alleles[0] + "\""
