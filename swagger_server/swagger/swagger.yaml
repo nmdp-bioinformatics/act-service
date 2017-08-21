@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: "The Allele Calling  service provides an API for converting raw sequence\
     \ data to GFE and HLA allele calls."
-  version: "0.0.2"
+  version: "0.0.3"
   title: "Allele Calling Service"
   contact:
     email: "mhalagan@nmdp.org"
@@ -73,73 +73,6 @@ paths:
           schema:
             $ref: "#/definitions/Error"
       x-swagger-router-controller: "swagger_server.controllers.default_controller"
-  /act_format:
-    get:
-      description: "Get HLA and GFE from consensus sequence or GFE notation"
-      operationId: "actformat_get"
-      produces:
-        - "text/plain"
-      parameters:
-      - name: "locus"
-        in: "query"
-        description: "Valid HLA locus"
-        required: true
-        type: "string"
-      - name: "sequence"
-        in: "query"
-        description: "Consensus sequence"
-        required: false
-        type: "string"
-      - name: "gfe"
-        in: "query"
-        description: "GFE Notation"
-        required: false
-        type: "string"
-      - name: "format_type"
-        in: "query"
-        description: "Specify the data format that will be returned"
-        required: false
-        type: "string"
-      - name: "neo4j_url"
-        in: "query"
-        description: "URL for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "user"
-        in: "query"
-        description: "Username for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "password"
-        in: "query"
-        description: "Password for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "gfe_url"
-        in: "query"
-        description: "URL for the gfe-service"
-        required: false
-        type: "string"
-      - name: "verbose"
-        in: "query"
-        description: "Flag for running service in verbose"
-        required: false
-        type: "boolean"
-      - name: "persist"
-        in: "query"
-        description: "Flag for persisting the data in the GFE DB"
-        required: false
-        type: "boolean"
-      responses:
-        200:
-          description: "HLA and GFE from consensus sequence"
-          schema:
-            $ref: "#/definitions/AlleleCall"
-        404:
-          description: "Failed to generate GFE"
-          schema:
-            $ref: "#/definitions/Error"
-      x-swagger-router-controller: "swagger_server.controllers.default_controller"  
   /gfe:
     get:
       description: "Get GFE notation associated with an HLA allele"
@@ -235,36 +168,31 @@ paths:
           schema:
             $ref: "#/definitions/Error"
       x-swagger-router-controller: "swagger_server.controllers.default_controller"
-  /seq_search:
+  /act_format:
     get:
-      description: "Sequence data associated from a specific feature or HLA allele"
-      operationId: "seqsrch_get"
+      description: "Get HLA and GFE from consensus sequence or GFE notation"
+      operationId: "actformat_get"
+      produces:
+        - "text/plain"
       parameters:
       - name: "locus"
         in: "query"
-        description: "HLA locus"
+        description: "Valid HLA locus"
         required: true
         type: "string"
-      - name: "start"
+      - name: "sequence"
         in: "query"
-        description: "Starting point of sequence"
+        description: "Consensus sequence"
         required: false
-        type: "integer"
-      - name: "end"
+        type: "string"
+      - name: "gfe"
         in: "query"
-        description: "End point of sequence"
+        description: "GFE Notation"
         required: false
-        type: "integer"
-      - name: "hla"
+        type: "string"
+      - name: "format_type"
         in: "query"
-        description: "HLA Allele"
-        required: false
-        type: "array"
-        items: 
-          type: "string"
-      - name: "feature"
-        in: "query"
-        description: "HLA feature rank"
+        description: "Specify the data format that will be returned"
         required: false
         type: "string"
       - name: "neo4j_url"
@@ -292,16 +220,21 @@ paths:
         description: "Flag for running service in verbose"
         required: false
         type: "boolean"
+      - name: "persist"
+        in: "query"
+        description: "Flag for persisting the data in the GFE DB"
+        required: false
+        type: "boolean"
       responses:
         200:
-          description: "Sequence data associated from a specific feature or HLA allele"
+          description: "HLA and GFE from consensus sequence"
           schema:
-            $ref: "#/definitions/SequenceCall"
+            $ref: "#/definitions/AlleleCall"
         404:
-          description: "Failed to retrieve sequence data"
+          description: "Failed to generate GFE"
           schema:
             $ref: "#/definitions/Error"
-      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"  
   /feature_search:
     get:
       description: "GFE notation and HLA alleles associated with an HLA allele or alleles"
@@ -514,6 +447,13 @@ definitions:
         type: "array"
         items:
           $ref: "#/definitions/Feature"
+      ihiw_ref:
+        type: "array"
+        items:
+          $ref: "#/definitions/Typing"
+      full_gene:
+        type: "object"
+        $ref: "#/definitions/Feature"
       gfe:
         type: "string"
       act_version:

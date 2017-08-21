@@ -5,6 +5,44 @@ Created on Feb 8, 2017
 '''
 
 
+def search_hla_features(locus, gfe_feats):
+
+    match = "MATCH(hla:IMGT)-[:HAS_GFE]-(gfe:GFE)-[f1:HAS_FEATURE]-(feat1:FEATURE)"
+    if(len(gfe_feats)) > 1:
+        for i in range(1, len(gfe_feats)):
+            j = i + 1
+            match = match + ",(hla:IMGT)-[:HAS_GFE]-(gfe:GFE)-[f" + str(j) + ":HAS_FEATURE]-(feat" + str(j) + ":FEATURE)"
+
+    i = 1
+    feat_q = "WHERE hla.locus = \"" + locus + "\""
+
+    for feat in gfe_feats:
+        [term, rank] = feat.split("-")
+        feat_q = feat_q + " AND feat" + str(i) + ".name = \"" + term.upper() + "\""
+        feat_q = feat_q + " AND feat" + str(i) + ".rank = \"" + rank + "\""
+        acc_q = " AND( f" + str(i) + ".accession = \"" + gfe_feats[feat][0] + "\""
+        if(len(gfe_feats[feat]) == 1):
+            acc_q = acc_q + ")"
+        else:
+            for j in range(1, len(gfe_feats[feat])):
+                acc_q = acc_q + " OR f" + str(i) + ".accession = \"" + gfe_feats[feat][j] + "\""
+            acc_q = acc_q + ")"
+        feat_q = feat_q + acc_q
+        i += 1
+
+    return_q = " RETURN DISTINCT hla.name AS HLA, gfe.name AS GFE"
+    return match + feat_q + return_q
+
+
+def ref_query(alleles):
+    q1 = "MATCH(hla:IMGT)-[:HAS_GFE]-(gfe:GFE) "
+    q2 = "WHERE hla.name = \"" + alleles[0] + "\""
+    for i in range(1, len(alleles)):
+        q2 = q2 + " OR hla.name = \"" + alleles[i] + "\""
+    q3 = " RETURN hla.name AS HLA, gfe.name AS GFE"
+    return q1 + q2 + q3
+
+
 def get_features(gfe):
 
     q1 = "MATCH(gfe:GFE)-[f1:HAS_FEATURE]-(f:FEATURE)"
@@ -30,7 +68,7 @@ def gfe_search(gfe):
     return(query)
 
 
-def similar_gfe(gfe, exon2, exon3):
+def similar_gfe_classI(gfe, exon2, exon3):
 
     [locus, feature_accessions] = gfe.split("w")
     typing_match = "MATCH (gfe1:GFE)-[f1:HAS_FEATURE]->(feat1:FEATURE)," \
@@ -52,6 +90,35 @@ def similar_gfe(gfe, exon2, exon3):
         + " AND f5.accession = f6.accession" \
         + " WITH gfe1.name AS GFE1, gfe2.name AS GFE2,collect(DISTINCT feat3.name) AS Names," \
         + " collect(DISTINCT {accesion:f6.accession,rank:feat3.rank, name: feat3.name}) AS Accession " \
+        + " return GFE1,GFE2,Names,Accession,size(Accession) AS Count" \
+        + " ORDER BY Count DESC"
+
+    return(typing_match)
+
+
+def similar_kir(locus):
+    query = "MATCH(gfe:GFE)" \
+        + "WHERE gfe.locus = \"" + locus + "\"" \
+        + "RETURN gfe.name AS GFE"
+    return query
+
+
+def similar_gfe_classII(gfe, exon2):
+
+    [locus, feature_accessions] = gfe.split("w")
+    typing_match = "MATCH (gfe1:GFE)-[f1:HAS_FEATURE]->(feat1:FEATURE)," \
+        + " (gfe2:GFE)-[f2:HAS_FEATURE]->(feat1:FEATURE)," \
+        + " (gfe1:GFE)-[f3:HAS_FEATURE]->(feat2:FEATURE)," \
+        + " (gfe2:GFE)-[f4:HAS_FEATURE]->(feat2:FEATURE)" \
+        + " WHERE gfe1.locus = \"" + locus + "\"" \
+        + " AND gfe2.locus = gfe1.locus" \
+        + " AND f1.accession = f2.accession" \
+        + " AND f1.accession = \"" + exon2 + "\"" \
+        + " AND feat1.name = \"EXON\"" \
+        + " AND feat1.rank = \"2\"" \
+        + " AND f5.accession = f6.accession" \
+        + " WITH gfe1.name AS GFE1, gfe2.name AS GFE2,collect(DISTINCT feat2.name) AS Names," \
+        + " collect(DISTINCT {accesion:f4.accession,rank:feat2.rank, name: feat2.name}) AS Accession " \
         + " return GFE1,GFE2,Names,Accession,size(Accession) AS Count" \
         + " ORDER BY Count DESC"
 
