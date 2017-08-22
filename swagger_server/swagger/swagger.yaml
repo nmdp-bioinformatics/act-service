@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: "The Allele Calling  service provides an API for converting raw sequence\
     \ data to GFE and HLA allele calls."
-  version: "0.0.3"
+  version: "0.0.4"
   title: "Allele Calling Service"
   contact:
     email: "mhalagan@nmdp.org"
@@ -11,6 +11,43 @@ info:
     name: "GNU GENERAL PUBLIC LICENSE"
     url: "https://www.gnu.org/licenses/lgpl.html"
 paths:
+  /persisted_data:
+    get:
+      description: "Get HLA and GFE from consensus sequence or GFE notation"
+      operationId: "persist_get"
+      produces:
+        - "application/json"
+      parameters:
+      - name: "neo4j_url"
+        in: "query"
+        description: "URL for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "user"
+        in: "query"
+        description: "Username for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "password"
+        in: "query"
+        description: "Password for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "verbose"
+        in: "query"
+        description: "Flag for running service in verbose"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "Persisted sequence data"
+          schema:
+            $ref: "#/definitions/Persisted"
+        404:
+          description: "Failed to generate GFE"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"
   /act:
     get:
       description: "Get HLA and GFE from consensus sequence or GFE notation"
@@ -193,7 +230,7 @@ paths:
       - name: "format_type"
         in: "query"
         description: "Specify the data format that will be returned"
-        required: false
+        required: true
         type: "string"
       - name: "neo4j_url"
         in: "query"
@@ -320,42 +357,33 @@ definitions:
         type: "string"
 
 
-  SequenceCall:
+  Persisted:
     type: "object"
     properties:
-      alleles:
+      persisted_data:
         type: "array"
         items:
-          type: "string"
-      feature_searched:
-        type: "string"
-      start:
-        type: "integer"
-      end:
-        type: "integer"
-      sequences:
-        type: "array"
-        items:
-          type: "string"
+          $ref: "#/definitions/PersistedData"
       act_version:
-        type: "string"
-      gfe_version:
         type: "string"
       gfedb_version:
         type: "string"
-    example:
-      alleles:
-        - "HLA-A*01:01:01:01"
-        - "HLA-A*01:01:01:02"
-      features_searched: "exon2"
-      sequences:
-        - ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-        - ACTGACTGACTGACTGACTGACTGACTGACTGTTTTTCTGACTGACTG
-        - ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-      act_version: "0.0.1"
-      gfe_version: "0.0.1"
-      gfedb_version: "0.0.1"
 
+  PersistedData:
+    type: "object"
+    properties:
+      hla:
+        type: "string"
+      gfe:
+        type: "string"
+      term:
+        type: "string"
+      rank:
+        type: "string"
+      accession:
+        type: "string"
+      sequence:
+        type: "string"
 
 
   FeatureCall:
@@ -452,8 +480,9 @@ definitions:
         items:
           $ref: "#/definitions/Typing"
       full_gene:
-        type: "object"
         $ref: "#/definitions/Feature"
+      typing_status:
+        $ref: "#/definitions/TypingStatus"      
       gfe:
         type: "string"
       act_version:
@@ -461,6 +490,8 @@ definitions:
       gfe_version:
         type: "string"
       gfedb_version:
+        type: "string"
+      imgtdb_version:
         type: "string"
     example:
       gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
@@ -572,6 +603,31 @@ definitions:
             rank: 1
             term: intron
             sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
+
+
+  TypingStatus:
+    type: "object"
+    properties:
+      status:
+        type: "string"
+      novel_features:
+        type: "array"
+        items:
+          $ref: "#/definitions/Feature"     
+    example:
+      status: "novel"
+      novel_features:
+        - accession: 1
+          locus: HLA-A
+          rank: 1
+          term: exon
+          sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
+        - accession: 2
+          locus: HLA-A
+          rank: 1
+          term: intron
+          sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
+
 
 
   Typing:

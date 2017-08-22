@@ -23,7 +23,7 @@ neo4juser = ''
 if os.getenv("NEO4JUSER"):
     neo4juser = os.getenv("NEO4JUSER")
 
-neo4jurl = "http://neo4j.b12x.org:80"
+neo4jurl = "http://localhost:7474"
 if os.getenv("NEO4JURL"):
     neo4jurl = os.getenv("NEO4JURL")
 
@@ -54,7 +54,7 @@ def actformat_get(locus, format_type, sequence=None, neo4j_url=neo4jurl, user=ne
     :rtype: AlleleCall
     """
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
-    typer = Act(graph, hostname=gfeurl)
+    typer = Act(graph, hostname=gfeurl, user=neo4juser, persist=persist)
     allele_call = typer.type_hla(locus, sequence, gfe)
 
     if isinstance(allele_call, Error):
@@ -89,7 +89,7 @@ def act_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=n
     :rtype: AlleleCall
     """
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
-    typer = Act(graph, hostname=gfeurl)
+    typer = Act(graph, hostname=gfeurl, user=neo4juser, persist=persist)
     allele_call = typer.type_hla(locus, sequence, gfe)
     if isinstance(allele_call, Error):
         return allele_call, 404
@@ -117,7 +117,7 @@ def ars_get(allele, group, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpas
     :rtype: ArsCall
     """
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
-    typer = Act(graph, hostname=gfeurl)
+    typer = Act(graph, hostname=gfeurl, user=neo4juser, persist=None)
     ars_call = typer.ars_redux(group, allele)
     if isinstance(ars_call, Error):
         return ars_call, 404
@@ -145,9 +145,12 @@ def gfe_get(hla, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url
     :rtype: AlleleCall
     """
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
-    typer = Act(graph, hostname=gfe_url)
+    typer = Act(graph, hostname=gfe_url, user=neo4juser, persist=None)
     gfe_call = typer.get_gfe_call(hla)
-    return gfe_call
+    if isinstance(gfe_call, Error):
+        return gfe_call, 404
+    else:
+        return gfe_call
 
 
 def feature_get(hla, feature, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, verbose=None):
@@ -172,10 +175,34 @@ def feature_get(hla, feature, neo4j_url=neo4jurl, user=neo4juser, password=neo4j
     :rtype: InlineResponse2003
     """
     graph = Graph(neo4j_url, user=user, password=password, bolt=False)
-    typer = Act(graph, hostname=gfeurl)
+    typer = Act(graph, hostname=gfeurl, user=neo4juser, persist=None)
     feature_call = typer.search_features(hla, feature)
     if isinstance(feature_call, Error):
         return feature_call, 404
     else:
         return feature_call
+
+
+def persist_get(neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, verbose=None):
+    """
+    persist_get
+    Get HLA and GFE from consensus sequence or GFE notation
+    :param neo4j_url: URL for the neo4j graph
+    :type neo4j_url: str
+    :param user: Username for the neo4j graph
+    :type user: str
+    :param password: Password for the neo4j graph
+    :type password: str
+    :param verbose: Flag for running service in verbose
+    :type verbose: bool
+
+    :rtype: Persisted
+    """
+    graph = Graph(neo4j_url, user=user, password=password, bolt=False)
+    typer = Act(graph, hostname=gfeurl, user=neo4juser, persist=None)
+    persisted_data = typer.get_persisted()
+    if isinstance(persisted_data, Error):
+        return persisted_data, 404
+    else:
+        return persisted_data
 

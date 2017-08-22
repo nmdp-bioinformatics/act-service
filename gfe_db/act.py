@@ -19,6 +19,13 @@ from gfe_db.cypher import get_features
 from gfe_db.cypher import ref_query
 from gfe_db.cypher import search_hla_features
 
+from gfe_db.cypher import hla_alleleid
+from gfe_db.cypher import gfe_alleleid
+from gfe_db.cypher import fullseqid
+from gfe_db.cypher import seqid
+from gfe_db.cypher import search_feature
+from gfe_db.cypher import persisted_query
+
 from swagger_server.models.error import Error
 from swagger_server.models.feature import Feature
 from swagger_server.models.typing import Typing
@@ -26,8 +33,12 @@ from swagger_server.models.gfe_call import GfeCall
 from swagger_server.models.gfe_typing import GfeTyping
 from swagger_server.models.allele_call import AlleleCall
 from swagger_server.models.feature_call import FeatureCall
+from swagger_server.models.typing_status import TypingStatus
 from swagger_server.models.ars_call import ArsCall
+from swagger_server.models.persisted import Persisted
+from swagger_server.models.persisted_data import PersistedData
 
+from py2neo import Node, Relationship
 import pandas as pa
 import swagger_client
 from swagger_client.rest import ApiException
@@ -48,7 +59,7 @@ is_gfe = lambda x: True if re.search("\d+-\d+-\d+", x) else False
 is_kir = lambda x: True if re.search("KIR", x) else False
 is_classII = lambda x: True if re.search("HLA-D", x) else False
 is_classI = lambda x: True if re.search("HLA-\Dw", x) else False
-lc = lambda x: x.lower() if not re.search("UTR", x) else x.lower().replace("utr","UTR")
+lc = lambda x: x.lower() if not re.search("UTR", x) else x.lower().replace("utr", "UTR")
 
 
 class Act(object):
@@ -56,12 +67,14 @@ class Act(object):
     classdocs
     '''
 
-    def __init__(self, graph, hostname):
+    def __init__(self, graph, hostname, user, persist):
         '''
         Constructor
         '''
+        self.user = user
+        self.persist = persist
         self.graph = graph
-        self.version = '0.0.3'
+        self.version = '0.0.4'
         api_client = ApiClient(host=hostname)
         self.api = swagger_client.DefaultApi(api_client=api_client)
         structure_dir = os.path.dirname(__file__)
@@ -94,21 +107,167 @@ class Act(object):
             else:
                 self.ref_alleles[locus].append(line)
 
+        max_hlaid = pa.DataFrame(self.graph.data('MATCH(hla:IMGT) RETURN max(hla.alleleId) AS ID'))
+        max_gfeid = pa.DataFrame(self.graph.data('MATCH(gfe:GFE) RETURN max(gfe.alleleId) AS ID'))
+        max_fullseqid = pa.DataFrame(self.graph.data('MATCH(seq:SEQUENCE) RETURN max(seq.sequenceId) AS ID'))
+        max_sequenceid = pa.DataFrame(self.graph.data('MATCH(feat:FEATURE) RETURN max(feat.sequenceId) AS ID'))
+
+        self.max_alleleid = max(max_hlaid['ID'][0], max_gfeid['ID'][0])
+        self.max_seqid = max(max_fullseqid['ID'][0], max_sequenceid['ID'][0])
+
         self.ref_gfe = {}
         for loc in self.ref_alleles:
             ref_q = ref_query(self.ref_alleles[loc])
             self.ref_gfe.update({loc: pa.DataFrame(self.graph.data(ref_q))})
+
+        if os.getenv("NEO4JADMIN"):
+            self.admin = os.getenv("NEO4JADMIN")
+
+    def get_seqid(self, sequence, seqtype, rank):
+
+        if seqtype == "SEQUENCE":
+            fullseq_q = fullseqid(sequence)
+            fullid = pa.DataFrame(self.graph.data(fullseq_q))
+            if not fullid.empty:
+                return fullid['ID'][0]
+            else:
+                self.max_seqid += 1
+                return self.max_seqid
+        else:
+            seq_q = seqid(sequence, seqtype, rank)
+            seq_id = pa.DataFrame(self.graph.data(seq_q))
+            if not seq_id.empty:
+                return seq_id['ID'][0]
+            else:
+                self.max_seqid += 1
+                return self.max_seqid
+
+    def get_alleleid(self, typing):
+
+        if is_gfe(typing):
+            gfe_q = gfe_alleleid(typing)
+            gfeid = pa.DataFrame(self.graph.data(gfe_q))
+            if not gfeid.empty:
+                return gfeid['ID'][0]
+            else:
+                self.max_alleleid += 1
+                return self.max_alleleid
+        else:
+            hla_q = hla_alleleid(typing)
+            hlaid = pa.DataFrame(self.graph.data(hla_q))
+            if not hlaid.empty:
+                return hlaid['ID'][0]
+            else:
+                self.max_alleleid += 1
+                return self.max_alleleid
+
+    def persist_typing(self, typing):
+
+        [loc, accesions] = typing.gfe.split("w")
+
+        gfe_alleleid = self.get_alleleid(typing.gfe)
+        gfe_node = Node("GFE", name=str(typing.gfe),
+                        imgtdb=str(typing.imgtdb_version),
+                        locus=str(loc),
+                        alleleId=int(gfe_alleleid),
+                        status=str("persisted"))
+
+        full_seq = typing.full_gene.sequence
+        full_seqid = self.get_seqid(full_seq, "SEQUENCE", 0)
+        seq_node = Node("SEQUENCE", name="Sequence", rank=int(0),
+                        sequenceId=int(full_seqid),
+                        sequence=str(full_seq),
+                        length=len(full_seq),
+                        nuc=[s for s in list(full_seq)],
+                        status=str("persisted"))
+
+        hla_nodes = []
+        relationships = []
+        for hla_typing in typing.typing:
+            hla_alleleid = self.get_alleleid(hla_typing.hla)
+            hla_node = Node("IMGT", name=hla_typing.hla,
+                            imgtdb=typing.imgtdb_version, locus=loc,
+                            alleleId=int(hla_alleleid))
+            gfe_rel = Relationship(hla_node, "HAS_GFE", gfe_node,
+                                   status="persisted")
+            seqgfe_rel = Relationship(hla_node, "HAS_FEATURE", seq_node,
+                                      status="persisted")
+            seqhla_rel = Relationship(gfe_node, "HAS_FEATURE", seq_node,
+                                      status="persisted")
+            hla_nodes.append(hla_node)
+            relationships.append(gfe_rel)
+            relationships.append(seqgfe_rel)
+            relationships.append(seqhla_rel)
+
+        for feat in typing.typing_status.novel_features:
+            feat_seqid = self.get_seqid(feat.sequence,
+                                        feat.term.upper(), feat.rank)
+            feature_node = Node("FEATURE", name=str(feat.term.upper()),
+                                rank=str(feat.rank),
+                                sequenceId=int(feat_seqid),
+                                sequence=str(feat.sequence),
+                                length=len(feat.sequence),
+                                nuc=[s for s in list(feat.sequence)],
+                                status=str("persisted"))
+            gfefeat_rel = Relationship(gfe_node, "HAS_FEATURE",
+                                       feature_node, accession=str(feat.accession),
+                                       status="persisted")
+            relationships.append(gfefeat_rel)
+            for hla_n in hla_nodes:
+                hlafeat_rel = Relationship(hla_n, "HAS_FEATURE",
+                                           feature_node,
+                                           accession=str(feat.accession),
+                                           status="persisted")
+                relationships.append(hlafeat_rel)
+
+        for feat in typing.features:
+            if not feat in typing.typing_status.novel_features:
+                feat_seqid = self.get_seqid(feat.sequence,
+                                            feat.term.upper(), feat.rank)
+                feature_node = Node("FEATURE", name=str(feat.term.upper()),
+                                    rank=str(feat.rank),
+                                    sequenceId=int(feat_seqid),
+                                    sequence=str(feat.sequence),
+                                    length=str(len(feat.sequence)),
+                                    nuc=[s for s in list(feat.sequence)])
+                gfefeat_rel = Relationship(gfe_node, "HAS_FEATURE",
+                                           feature_node, accession=str(feat.accession),
+                                           status="persisted")
+                relationships.append(gfefeat_rel)
+                for hla_n in hla_nodes:
+                    hlafeat_rel = Relationship(hla_n, "HAS_FEATURE",
+                                               feature_node,
+                                               accession=str(feat.accession),
+                                               status="persisted")
+                    relationships.append(hlafeat_rel)
+
+        tx = self.graph.begin()
+        for rel in relationships:
+            tx.merge(rel)
+        tx.commit()
+
+    def unique_features(self, features):
+
+        unique = []
+        for feat in features:
+            feat_q = search_feature(feat.term, feat.rank, feat.sequence)
+            seq_features = pa.DataFrame(self.graph.data(feat_q))
+            if seq_features.empty:
+                unique.append(feat)
+        return unique
 
     def type_hla(self, locus, sequence, type_gfe):
 
         ac_object = AlleleCall()
         ac_object.act_version = self.version
         ac_object.gfedb_version = '0.0.2'
+        ac_object.typing_status = TypingStatus()
 
         if type_gfe:
             ac_object.gfe = type_gfe
             seq_features = pa.DataFrame(self.graph.data(get_features(type_gfe)))
             if not seq_features.empty:
+                ac_object.typing_status.status = "documented"
                 features = list()
                 for i in range(0, len(seq_features['term'])):
                     feature = Feature(accession=seq_features['accession'][i], rank=seq_features['rank'][i], sequence=seq_features['sequence'][i], term=lc(seq_features['term'][i]))
@@ -123,14 +282,24 @@ class Act(object):
                 seq_o = self.gfe_sequence(locus, type_gfe)
                 ac_object.full_gene = Feature(rank="1", sequence=seq_o.sequence, term="gene")
                 ac_object.features = [Feature(accession=f.accession, rank=f.rank, sequence=f.sequence, term=lc(f.term)) for f in seq_o.structure]
+                ac_object.typing_status.novel_features = self.unique_features(ac_object.features)
                 ac_object.ihiw_ref = self.get_ref_allele(locus, type_gfe, ac_object.features)
                 ac_object.typing = self.find_similar(ac_object.gfe, ac_object.features)
+
+                if(len(ac_object.typing_status.novel_features) != 0):
+                    ac_object.typing_status.status = "novel"
+                else:
+                    ac_object.typing_status.status = "novel_combination"
+
+                if self.admin == self.user and self.persist:
+                    self.persist_typing(ac_object)
             return ac_object
         else:
             sequence = sequence.upper()
             sequence_typing = self.sequence_lookup(locus, sequence)
             if sequence_typing:
-                ac_object.typing = sequence_typing[0]
+                ac_object.typing_status.status = "documented"
+                ac_object.typing = [sequence_typing[0]]
                 ac_object.gfe = sequence_typing[1]
                 ac_object.features = sequence_typing[2]
                 ac_object.full_gene = Feature(rank="1", sequence=sequence, term="gene")
@@ -151,12 +320,22 @@ class Act(object):
                 ac_object.gfe_version = gfe_o.version
                 ac_object.ihiw_ref = self.get_ref_allele(locus, ac_object.gfe, gfe_o.structure)
                 ac_object.features = [Feature(accession=f.accession, rank=f.rank, sequence=f.sequence, term=f.term) for f in gfe_o.structure]
+                ac_object.typing_status.novel_features = self.unique_features(ac_object.features)
                 related_gfe = self.gfe_lookup(ac_object.gfe, ac_object.features)
+
+                if(len(ac_object.typing_status.novel_features) != 0):
+                    ac_object.typing_status.status = "novel"
+                else:
+                    ac_object.typing_status.status = "novel_combination"
 
                 if related_gfe:
                     ac_object.typing = related_gfe
                 else:
                     ac_object.typing = self.find_similar(ac_object.gfe, ac_object.features)
+
+                if self.admin == self.user and self.persist:
+                    self.persist_typing(ac_object)
+
                 return ac_object
 
     def sequence_lookup(self, locus, sequence):
@@ -506,15 +685,32 @@ class Act(object):
         # TODO: Use the full sequence accession as the ID
         sequence = typing.full_gene.sequence
         seqid = 'GFE'
+        comments = []
+        description = "GFE " + typing.gfe
+        comments.append("Typing Status: " + typing.typing_status.status)
+        if hasattr(typing.typing_status, 'novel_features'):
+            uniq = " ".join(["-".join([feat.term, str(feat.rank)]) for feat in typing.typing_status.novel_features])
+            comments.append("Novel features: " + uniq)
+        
+        allele_typed = "/".join([typ.hla for typ in typing.typing])
+        comments.append("Allele Call: " + allele_typed)
+        comments.append("IHIW Reference: " + typing.ihiw_ref[0].hla)
+        comments.append("")
+        comments.append("Typed with ACT Service " + self.version)
+        if hasattr(typing, 'gfe_version'):
+            comments.append("Annotated with GFE Service " + typing.gfe_version)
+
         if hasattr(typing.full_gene, 'accession'):
             seqid = 'GFEw' + str(typing.full_gene.accession)
-        seqrecord = SeqRecord(Seq(sequence, IUPAC.unambiguous_dna), id=seqid, description="Typed with ACT Service " + self.version)
+        seqrecord = SeqRecord(Seq(sequence, IUPAC.unambiguous_dna), id=seqid, description=description)
         source_feature = SeqFeature(FeatureLocation(0, len(str(seqrecord.seq))), type="source", strand=1)
         seqrecord.annotations["sequence_version"] = 1
         seqrecord.annotations["molecule_type"] = "DNA"
         seqrecord.annotations["data_file_division"] = "HUM"
         if hasattr(typing.full_gene, 'accession'):
             seqrecord.annotations["accessions"] = [seqid]
+
+        seqrecord.annotations["comment"] = comments
         seqrecord.features.append(source_feature)
         seqrecord.features[0].qualifiers = OrderedDict([('organism', ['Homo sapiens']), ('mol_type', ['genomic DNA']), ('db_xref', ['taxon:9606'])])
 
@@ -537,7 +733,6 @@ class Act(object):
 
     def get_ref_allele(self, locus, gfe, features):
 
-        # TODO: Add ihiw reference allele
         hla_sim = {}
         gfe_mapped = {}
         for i in range(0, len(self.ref_gfe[locus]['HLA'])):
@@ -610,5 +805,19 @@ class Act(object):
         else:
             return fc
 
+    def get_persisted(self):
 
+        persisted = Persisted(act_version=self.version, gfedb_version='0.0.2')
+        per_data = pa.DataFrame(self.graph.data(persisted_query()))
+        persisted_a = []
+        if not per_data.empty:
+            for i in range(0,len(per_data['HLA'])):
+                per = PersistedData(hla=per_data['HLA'][i],gfe=per_data['GFE'][i],
+                                    term=per_data['TERM'][i],rank=per_data['RANK'][i],
+                                    accession=per_data['ACCESSION'][i],
+                                    sequence=per_data['SEQUENCE'][i])
+                persisted_a.append(per)
+
+        persisted.persisted_data = persisted_a
+        return persisted
 
