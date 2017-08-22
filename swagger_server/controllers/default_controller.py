@@ -23,7 +23,7 @@ neo4juser = ''
 if os.getenv("NEO4JUSER"):
     neo4juser = os.getenv("NEO4JUSER")
 
-neo4jurl = "http://localhost:7474"
+neo4jurl = "http://neo4j.b12x.org:80"
 if os.getenv("NEO4JURL"):
     neo4jurl = os.getenv("NEO4JURL")
 
