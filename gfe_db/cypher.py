@@ -193,12 +193,45 @@ def gfe_hla(gfe):
     return(cyper_query)
 
 
-def groups(locus, exon2, exon3):
+# def groups_classI(locus, group, exon2, exon3):
 
-    match = "MATCH (hla:IMGT)-[:HAS_GFE]-(gfe1:GFE)-[f1:HAS_FEATURE]->(feat1:FEATURE)"
+#     match = "MATCH (feat2:FEATURE)-[f2:HAS_FEATURE]-(gfe:GFE)-[:HAS_GFE]-(hla:IMGT)-[:IN_GROUP]-(group:" + group + ")-[:IN_GROUP]-(hla:IMGT)-[:HAS_GFE]-(gfe:GFE)-[f1:HAS_FEATURE]-(feat1:FEATURE)"
+#     where = " WHERE feat1.rank = '2' AND feat2.name = \"EXON\" AND feat1.name = \"EXON\" AND hla.locus = \"" + locus + "\""
+#     where2 = " AND feat2.rank = '3' AND f2.accession = \"" + exon3 + "\" AND f1.accession = \"" + exon2 + "\""
+#     returnc = "  RETURN group.name as ARS, hla.name as HLA,gfe.name AS GFE,group.name AS ARS"
+#     cypher = match + where + where2 + returnc
+#     return(cypher)
+
+
+# def groups_classII(locus, group, exon3):
+
+#     match = "MATCH (group:" + group + ")-[:IN_GROUP]-(hla:IMGT)-[:HAS_GFE]-(gfe:GFE)-[f1:HAS_FEATURE]->(feat1:FEATURE)"
+#     where = " WHERE feat1.rank = '3' AND feat1.name = \"EXON\" AND hla.locus = \"" + locus + "\""
+#     where2 = " AND f1.accession = \"" + exon3 + "\""
+#     returnc = " RETURN group.name as ARS, hla.name as HLA,gfe.name AS GFE,group.name AS ARS"
+#     cypher = match + where + where2 + returnc
+#     return(cypher)
+
+
+def groups_classI(locus, group, exon2, exon3):
+
+    match = "MATCH (group:" + group + ")-[:IN_GROUP]-(hla:IMGT)-[:HAS_GFE]-(gfe1:GFE)-[f1:HAS_FEATURE]->(feat1:FEATURE)"
     match2 = ",(gfe1:GFE)-[f2:HAS_FEATURE]->(feat2:FEATURE) "
     where = " WHERE feat1.rank = '2' AND feat2.name = \"EXON\" AND feat1.name = \"EXON\" AND hla.locus = \"" + locus + "\""
     where2 = " AND feat2.rank = '3' AND f2.accession = \"" + exon3 + "\" AND f1.accession = \"" + exon2 + "\""
+    withst = " WITH collect(DISTINCT hla.name) as HLA,collect(DISTINCT gfe1.name) as GFE,collect(DISTINCT group.name) as ARS"
+    returnc = " RETURN HLA,GFE,ARS"
+    cypher = match + match2 + where + where2 + withst + returnc
+    print(cypher)
+    return(cypher)
+
+
+def groups_classII(locus, group, exon3):
+
+    match = "MATCH (group:" + group + ")-[:IN_GROUP]-(hla:IMGT)-[:HAS_GFE]-(gfe1:GFE)-[f1:HAS_FEATURE]->(feat1:FEATURE)"
+    match2 = ",(gfe1:GFE)-[f2:HAS_FEATURE]->(feat2:FEATURE) "
+    where = " WHERE feat1.rank = '3' AND feat1.name = \"EXON\" AND hla.locus = \"" + locus + "\""
+    where2 = " AND f1.accession = \"" + exon3 + "\""
     withst = " WITH collect(DISTINCT hla.name) as HLA,collect(DISTINCT gfe1.name) as GFE"
     returnc = " RETURN HLA,GFE"
     cypher = match + match2 + where + where2 + withst + returnc
