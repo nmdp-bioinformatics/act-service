@@ -24,6 +24,7 @@ from gfe_db.cypher import gfe_alleleid
 from gfe_db.cypher import fullseqid
 from gfe_db.cypher import seqid
 from gfe_db.cypher import search_feature
+from gfe_db.cypher import persisted_query
 
 from swagger_server.models.error import Error
 from swagger_server.models.feature import Feature
@@ -34,6 +35,8 @@ from swagger_server.models.allele_call import AlleleCall
 from swagger_server.models.feature_call import FeatureCall
 from swagger_server.models.typing_status import TypingStatus
 from swagger_server.models.ars_call import ArsCall
+from swagger_server.models.persisted import Persisted
+from swagger_server.models.persisted_data import PersistedData
 
 from py2neo import Node, Relationship
 import pandas as pa
@@ -802,5 +805,19 @@ class Act(object):
         else:
             return fc
 
+    def get_persisted(self):
 
+        persisted = Persisted(act_version=self.version, gfedb_version='0.0.2')
+        per_data = pa.DataFrame(self.graph.data(persisted_query()))
+        persisted_a = []
+        if not per_data.empty:
+            for i in range(0,len(per_data['HLA'])):
+                per = PersistedData(hla=per_data['HLA'][i],gfe=per_data['GFE'][i],
+                                    term=per_data['TERM'][i],rank=per_data['RANK'][i],
+                                    accession=per_data['ACCESSION'][i],
+                                    sequence=per_data['SEQUENCE'][i])
+                persisted_a.append(per)
+
+        persisted.persisted_data = persisted_a
+        return persisted
 

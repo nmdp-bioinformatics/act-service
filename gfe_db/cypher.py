@@ -247,3 +247,10 @@ def get_sequence(seqtype, allele):
     return(query)
 
 
+def persisted_query():
+    query = "MATCH(hla:IMGT)-[g:HAS_GFE]-(gfe:GFE)-[f:HAS_FEATURE]-(feat:FEATURE) "
+    q2 = "WHERE g.status = \"persisted\" "
+    q3 = "AND g.status = \"persisted\" "
+    q4 = "RETURN hla.name AS HLA,gfe.name AS GFE,feat.name AS TERM,feat.rank AS RANK,f.accession AS ACCESSION,feat.sequence AS SEQUENCE"
+    return query + q2 + q3 + q4
+

@@ -9,5 +9,7 @@ from .feature import Feature
 from .feature_call import FeatureCall
 from .gfe_call import GfeCall
 from .gfe_typing import GfeTyping
+from .persisted import Persisted
+from .persisted_data import PersistedData
 from .typing import Typing
 from .typing_status import TypingStatus

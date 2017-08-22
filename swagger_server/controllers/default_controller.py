@@ -182,3 +182,27 @@ def feature_get(hla, feature, neo4j_url=neo4jurl, user=neo4juser, password=neo4j
     else:
         return feature_call
 
+
+def persist_get(neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, verbose=None):
+    """
+    persist_get
+    Get HLA and GFE from consensus sequence or GFE notation
+    :param neo4j_url: URL for the neo4j graph
+    :type neo4j_url: str
+    :param user: Username for the neo4j graph
+    :type user: str
+    :param password: Password for the neo4j graph
+    :type password: str
+    :param verbose: Flag for running service in verbose
+    :type verbose: bool
+
+    :rtype: Persisted
+    """
+    graph = Graph(neo4j_url, user=user, password=password, bolt=False)
+    typer = Act(graph, hostname=gfeurl, user=neo4juser, persist=None)
+    persisted_data = typer.get_persisted()
+    if isinstance(persisted_data, Error):
+        return persisted_data, 404
+    else:
+        return persisted_data
+
