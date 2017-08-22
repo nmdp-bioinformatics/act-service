@@ -27,8 +27,6 @@ class ArsCall(Model):
         :type share_allele: List[Typing]
         :param act_version: The act_version of this ArsCall.
         :type act_version: str
-        :param gfe_version: The gfe_version of this ArsCall.
-        :type gfe_version: str
         :param gfedb_version: The gfedb_version of this ArsCall.
         :type gfedb_version: str
         """
