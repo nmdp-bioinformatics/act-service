@@ -120,6 +120,7 @@ class Act(object):
             ref_q = ref_query(self.ref_alleles[loc])
             self.ref_gfe.update({loc: pa.DataFrame(self.graph.data(ref_q))})
 
+        self.admin = ''
         if os.getenv("NEO4JADMIN"):
             self.admin = os.getenv("NEO4JADMIN")
 
@@ -811,7 +812,7 @@ class Act(object):
         per_data = pa.DataFrame(self.graph.data(persisted_query()))
         persisted_a = []
         if not per_data.empty:
-            for i in range(0,len(per_data['HLA'])):
+            for i in range(0, len(per_data['HLA'])):
                 per = PersistedData(hla=per_data['HLA'][i],gfe=per_data['GFE'][i],
                                     term=per_data['TERM'][i],rank=per_data['RANK'][i],
                                     accession=per_data['ACCESSION'][i],
