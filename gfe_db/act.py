@@ -26,6 +26,9 @@ from gfe_db.cypher import seqid
 from gfe_db.cypher import search_feature
 from gfe_db.cypher import persisted_query
 
+from gfe_db.cypher import groups_classI
+from gfe_db.cypher import groups_classII
+
 from swagger_server.models.error import Error
 from swagger_server.models.feature import Feature
 from swagger_server.models.typing import Typing
@@ -655,7 +658,27 @@ class Act(object):
                 ars_call.share_allele = list(found_hla.values())
                 return ars_call
             else:
-                return ars_call
+                #groups_classI(locus, group, exon2, exon3):
+                [loc, typ] = typing.split("w")
+                gfe_parts = self.breakup_gfe(typing)
+                group_q = groups_classI(loc, group, gfe_parts['exon-2'], gfe_parts['exon-3'])
+                ars_data = pa.DataFrame(self.graph.data(group_q))
+                if not ars_data.empty:
+                    found_hla = {}
+                    hla_alleles = flatten(ars_data["HLA"])
+                    ars_alleles = flatten(ars_data["ARS"])
+                    for i in range(0, len(hla_alleles)):
+                        hla = hla_alleles[i]
+                        hla_typing = Typing(hla=hla)
+                        found_hla.update({hla: hla_typing})
+
+                    ars_call.allele = typing
+                    ars_call.group_type = group
+                    ars_call.group = ars_alleles[0]
+                    ars_call.share_allele = list(found_hla.values())
+                    return ars_call
+                else:
+                    return ars_call
         else:
             hla_query = hla_ars(group, typing)
             hla_data = pa.DataFrame(self.graph.data(hla_query))
