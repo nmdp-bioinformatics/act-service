@@ -263,10 +263,6 @@ paths:
         required: false
         type: "boolean"
       responses:
-        200:
-          description: "HLA and GFE from consensus sequence"
-          schema:
-            $ref: "#/definitions/AlleleCall"
         404:
           description: "Failed to generate GFE"
           schema:
