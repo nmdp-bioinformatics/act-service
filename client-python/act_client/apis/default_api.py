@@ -195,7 +195,7 @@ class DefaultApi(object):
         :param str gfe_url: URL for the gfe-service
         :param bool verbose: Flag for running service in verbose
         :param bool persist: Flag for persisting the data in the GFE DB
-        :return: AlleleCall
+        :return: None
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -229,7 +229,7 @@ class DefaultApi(object):
         :param str gfe_url: URL for the gfe-service
         :param bool verbose: Flag for running service in verbose
         :param bool persist: Flag for persisting the data in the GFE DB
-        :return: AlleleCall
+        :return: None
                  If the method is called asynchronously,
                  returns the request thread.
         """
@@ -303,7 +303,7 @@ class DefaultApi(object):
                                         body=body_params,
                                         post_params=form_params,
                                         files=local_var_files,
-                                        response_type='AlleleCall',
+                                        response_type=str,
                                         auth_settings=auth_settings,
                                         callback=params.get('callback'),
                                         _return_http_data_only=params.get('_return_http_data_only'),
