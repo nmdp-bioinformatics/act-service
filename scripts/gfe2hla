@@ -97,8 +97,9 @@ def main():
             status = allele_call.typing_status.status
             feats = []
             if hasattr(allele_call.typing_status, 'novel_features'):
-                for feat in allele_call.typing_status.novel_features:
-                    feats.append("-".join([feat.term, str(feat.rank)]))
+                if allele_call.typing_status.novel_features:
+                    for feat in allele_call.typing_status.novel_features:
+                        feats.append("-".join([feat.term, str(feat.rank)]))
             novel_feats = ";".join(feats)
             gfe_typing[i] = [subid, hmlfile, locus, gfe, aligned, seqlength, hla, ref, status, novel_feats]
 
