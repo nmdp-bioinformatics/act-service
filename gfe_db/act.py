@@ -77,7 +77,7 @@ class Act(object):
         self.user = user
         self.persist = persist
         self.graph = graph
-        self.version = '0.0.4'
+        self.version = '0.0.5'
         api_client = ApiClient(host=hostname)
         self.api = swagger_client.DefaultApi(api_client=api_client)
         structure_dir = os.path.dirname(__file__)

@@ -4,7 +4,7 @@ import sys
 from setuptools import setup, find_packages
 
 NAME = "act_service"
-VERSION = "0.0.4"
+VERSION = "0.0.5"
 
 # To install the library, run the following
 #
@@ -22,6 +22,7 @@ setup(
     keywords=["Swagger", "Allele Calling Service"],
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     package_data={'swagger_server': ['swagger/swagger.yaml'], 'gfe_db': ['data/*']},
+    scripts=['scripts/type_gfe'],
     install_requires=['py2neo', 'pandas', 'connexion', 'nose', 'biopython'],
     include_package_data=True,
     long_description="""\
