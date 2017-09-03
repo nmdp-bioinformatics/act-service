@@ -161,7 +161,7 @@ def similar_gfe_classII(gfe, exon2):
         + " AND NOT(f2.status = \"persisted\")" \
         + " AND NOT(f3.status = \"persisted\")" \
         + " AND NOT(f4.status = \"persisted\")" \
-        + " AND f5.accession = f6.accession" \
+        + " AND f3.accession = f4.accession" \
         + " WITH gfe1.name AS GFE1, gfe2.name AS GFE2,collect(DISTINCT feat2.name) AS Names," \
         + " collect(DISTINCT {accesion:f4.accession,rank:feat2.rank, name: feat2.name}) AS Accession " \
         + " return GFE1,GFE2,Names,Accession,size(Accession) AS Count" \
