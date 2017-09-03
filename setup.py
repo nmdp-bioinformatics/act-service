@@ -22,7 +22,7 @@ setup(
     keywords=["Swagger", "Allele Calling Service"],
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     package_data={'swagger_server': ['swagger/swagger.yaml'], 'gfe_db': ['data/*']},
-    scripts=['scripts/type_gfe'],
+    scripts=['scripts/gfe2hla'],
     install_requires=['py2neo', 'pandas', 'connexion', 'nose', 'biopython'],
     include_package_data=True,
     long_description="""\
