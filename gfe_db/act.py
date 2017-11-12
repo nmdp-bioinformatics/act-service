@@ -4,6 +4,10 @@ Created on Feb 8, 2017
 @author: mhalagan
 '''
 
+from pygfe import pyGFE
+from seqann import BioSeqAnn
+from pygfe.feature_client.models.feature import Feature
+
 from gfe_db.cypher import sequence_search
 from gfe_db.cypher import gfe_search
 from gfe_db.cypher import similar_gfe_classI
@@ -51,11 +55,17 @@ import glob
 import re
 import json
 
+import sys
+from Bio.Seq import Seq
+from Bio.Alphabet import IUPAC
+from Bio.SeqRecord import SeqRecord
+from BioSQL import BioSeqDatabase
 from Bio.SeqFeature import SeqFeature, FeatureLocation
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from collections import OrderedDict
 from Bio.Alphabet import IUPAC
+import pymysql
 
 flatten = lambda l: [item for sublist in l for item in sublist]
 is_gfe = lambda x: True if re.search("\d+-\d+-\d+", x) else False
@@ -63,6 +73,39 @@ is_kir = lambda x: True if re.search("KIR", x) else False
 is_classII = lambda x: True if re.search("HLA-D", x) else False
 is_classI = lambda x: True if re.search("HLA-\Dw", x) else False
 lc = lambda x: x.lower() if not re.search("UTR", x) else x.lower().replace("utr", "UTR")
+
+biosqlpass = ''
+if os.getenv("BIOSQLPASS"):
+    biosqlpass = os.getenv("BIOSQLPASS")
+
+biosqluser = ''
+if os.getenv("BIOSQLUSER"):
+    biosqluser = os.getenv("BIOSQLUSER")
+
+biosqlhost = "localhost"
+if os.getenv("BIOSQLHOST"):
+    biosqlhost = os.getenv("BIOSQLHOST")
+
+biosqldb = "bioseqdb"
+if os.getenv("BIOSQLDB"):
+    biosqldb = os.getenv("BIOSQLDB")
+
+biosqlport = 3306
+if os.getenv("BIOSQLPORT"):
+    biosqlport = os.getenv("BIOSQLPORT")
+
+
+def conn():
+    try:
+        print(biosqlpass, biosqluser, biosqlhost, biosqldb, biosqlport, sep="\t")
+        conn = pymysql.connect(host=biosqlhost,
+                               port=biosqlport, user=biosqluser,
+                               passwd=biosqlpass, db=biosqldb)
+        conn.close()
+        return True
+    except Exception as e:
+        print("Exception while checking MYSQL Connection:" + str(e))
+        return False
 
 
 class Act(object):
@@ -74,6 +117,21 @@ class Act(object):
         '''
         Constructor
         '''
+        seqann = None
+        if conn():
+            server = BioSeqDatabase.open_database(driver="pymysql",
+                                                  user="root",
+                                                  passwd="", host="localhost",
+                                                  db="bioseqdb")
+            print("Server found!", file=sys.stderr)
+            seqann = BioSeqAnn(server=server)
+        else:
+            print("No Server found!", file=sys.stderr)
+            seqann = BioSeqAnn()
+
+        gfemaker = pyGFE()
+        self.gfe = gfemaker
+        self.seqann = seqann
         self.user = user
         self.persist = persist
         self.graph = graph
@@ -312,18 +370,25 @@ class Act(object):
             else:
 
                 gfe_o = self.gfe_create(locus, sequence)
-                if hasattr(gfe_o, 'body'):
-                    error = json.loads(gfe_o.body)
-                    error_o = Error()
-                    for k in error:
-                        setattr(error_o, k.lower(), error[k])
-                    return error_o
+                # if hasattr(gfe_o, 'body'):
+                #     error = json.loads(gfe_o.body)
+                #     error_o = Error()
+                #     for k in error:
+                #         setattr(error_o, k.lower(), error[k])
+                #     return error_o
+                ac_object.gfe = gfe_o['gfe']
+                #ac_object.full_gene = Feature(accession=gfe_o['fullgene'].accession, rank=gfe_o.fullgene.rank, sequence=gfe_o.fullgene.sequence, term=gfe_o.fullgene.term)
+                #ac_object.gfe_version = gfe_o['version']
+                #ac_object.ihiw_ref = self.get_ref_allele(locus, ac_object.gfe, gfe_o['structure'])
+                ac_object.features = [Feature(accession=f.accession, rank=f.rank, sequence=f.sequence, term=f.term) for f in gfe_o['structure']]
+                ac_object.typing_status.novel_features = self.unique_features(ac_object.features)
+                related_gfe = self.gfe_lookup(ac_object.gfe, ac_object.features)
 
-                ac_object.gfe = gfe_o.gfe
-                ac_object.full_gene = Feature(accession=gfe_o.fullgene.accession, rank=gfe_o.fullgene.rank, sequence=gfe_o.fullgene.sequence, term=gfe_o.fullgene.term)
-                ac_object.gfe_version = gfe_o.version
-                ac_object.ihiw_ref = self.get_ref_allele(locus, ac_object.gfe, gfe_o.structure)
-                ac_object.features = [Feature(accession=f.accession, rank=f.rank, sequence=f.sequence, term=f.term) for f in gfe_o.structure]
+                # ac_object.gfe = gfe_o.gfe
+                # ac_object.full_gene = Feature(accession=gfe_o.fullgene.accession, rank=gfe_o.fullgene.rank, sequence=gfe_o.fullgene.sequence, term=gfe_o.fullgene.term)
+                # ac_object.gfe_version = gfe_o.version
+                # ac_object.ihiw_ref = self.get_ref_allele(locus, ac_object.gfe, gfe_o.structure)
+                ac_object.features = [Feature(accession=f.accession, rank=f.rank, sequence=f.sequence, term=f.term) for f in gfe_o['structure']]
                 ac_object.typing_status.novel_features = self.unique_features(ac_object.features)
                 related_gfe = self.gfe_lookup(ac_object.gfe, ac_object.features)
 
@@ -376,11 +441,15 @@ class Act(object):
 
         :return: GFEobject.
         """
-        try:
-            return self.api.gfe_post(locus=locus, sequence=sequence, verbose=1)
-        except ApiException as e:
-            print("Exception when calling DefaultApi->gfe_post: %s\n" % e)
-            return e
+        seq_rec = SeqRecord(Seq(sequence, IUPAC.unambiguous_dna), id="GFE")
+        annotation = self.seqann.annotate(seq_rec, locus)
+        features, gfe = self.gfe.get_gfe(annotation, locus)
+        return {'gfe': gfe, 'structure': features}
+        # try:
+        #     return self.api.gfe_post(locus=locus, sequence=sequence, verbose=1)
+        # except ApiException as e:
+        #     print("Exception when calling DefaultApi->gfe_post: %s\n" % e)
+        #     return e
 
     def gfe_sequence(self, locus, gfe):
         """
@@ -471,9 +540,9 @@ class Act(object):
             gfe_similarity = {}
             for i in range(0, len(similar_data['GFE1'])):
                 sim1 = self.calcDiff(similar_data['GFE1'][i], gfe)
-                sim2 = self.calcDiff(similar_data['GFE2'][i], gfe)
+                #sim2 = self.calcDiff(similar_data['GFE2'][i], gfe)
                 gfe_similarity.update({similar_data['GFE1'][i]: sim1})
-                gfe_similarity.update({similar_data['GFE2'][i]: sim2})
+                #gfe_similarity.update({similar_data['GFE2'][i]: sim2})
 
             found_hla = {}
             max_val = max(gfe_similarity.values())
@@ -546,24 +615,47 @@ class Act(object):
         gfe_parts2 = self.breakup_gfe(gfe2)
         feat_list = list()
         for feat in gfe_parts1:
-            if gfe_parts1[feat] == gfe_parts2[feat]:
-                feat_term, feat_rank = feat.split('-')
-                shared_feat = Feature(term=feat_term, rank=feat_rank, sequence=structures[feat], accession=gfe_parts1[feat])
-                feat_list.append(shared_feat)
+            if feat in gfe_parts2:
+                if gfe_parts1[feat] == gfe_parts2[feat]:
+                    feat_term, feat_rank = feat.split('-')
+                    shared_feat = Feature(term=feat_term, rank=feat_rank, sequence=structures[feat], accession=gfe_parts1[feat])
+                    feat_list.append(shared_feat)
 
         return(feat_list)
 
     def breakup_gfe(self, gfe):
         [locus, feature_accessions] = gfe.split("w")
         accessions = feature_accessions.split("-")
-        i = 0
-        features = {}
-        for feature_rank in self.structures[locus]:
-            accession = accessions[i]
-            features.update({feature_rank: accession})
-            i += 1
 
-        return(features)
+        if locus == "HLA-DQB1":
+            if len(accessions) < len(self.structures[locus]):
+                i = 0
+                features = {}
+                old_dq = ["intro_1","exon_2","intron_2","exon_3","intro_3"]
+                for feature_rank in old_dq:
+                    accession = accessions[i]
+                    features.update({feature_rank: accession})
+                    i += 1
+
+                return(features)
+            else:
+                i = 0
+                features = {}
+                for feature_rank in self.structures[locus]:
+                    accession = accessions[i]
+                    features.update({feature_rank: accession})
+                    i += 1
+
+                return(features)
+        else:
+            i = 0
+            features = {}
+            for feature_rank in self.structures[locus]:
+                accession = accessions[i]
+                features.update({feature_rank: accession})
+                i += 1
+
+            return(features)
 
     def gfe2hla(self, gfe):
 
