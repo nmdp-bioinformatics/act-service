@@ -64,7 +64,7 @@ def actformat_get(locus, format_type, sequence=None, neo4j_url=neo4jurl, user=ne
         imgt_fh = StringIO()
         SeqIO.write(imgt_formatted, imgt_fh, format_type)
         imgt_data = imgt_fh.getvalue()
-        return imgt_data, 200, {'content-type': 'text/plain' }
+        return imgt_data, 200, {'content-type': 'text/plain'}
 
 
 def act_get(locus, sequence=None, neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, gfe_url=gfeurl, gfe=None, verbose=None, persist=None):

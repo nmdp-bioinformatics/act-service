@@ -147,24 +147,15 @@ def similar_kir(locus):
 def similar_gfe_classII(gfe, exon2):
 
     [locus, feature_accessions] = gfe.split("w")
-    typing_match = "MATCH (gfe1:GFE)-[f1:HAS_FEATURE]->(feat1:FEATURE)," \
-        + " (gfe2:GFE)-[f2:HAS_FEATURE]->(feat1:FEATURE)," \
-        + " (gfe1:GFE)-[f3:HAS_FEATURE]->(feat2:FEATURE)," \
-        + " (gfe2:GFE)-[f4:HAS_FEATURE]->(feat2:FEATURE)" \
+    typing_match = "MATCH (gfe1:GFE)-[f1:HAS_FEATURE]->(feat1:FEATURE)" \
         + " WHERE gfe1.locus = \"" + locus + "\"" \
-        + " AND gfe2.locus = gfe1.locus" \
-        + " AND f1.accession = f2.accession" \
         + " AND f1.accession = \"" + exon2 + "\"" \
         + " AND feat1.name = \"EXON\"" \
         + " AND feat1.rank = \"2\"" \
         + " AND NOT(f1.status = \"persisted\")" \
-        + " AND NOT(f2.status = \"persisted\")" \
-        + " AND NOT(f3.status = \"persisted\")" \
-        + " AND NOT(f4.status = \"persisted\")" \
-        + " AND f3.accession = f4.accession" \
-        + " WITH gfe1.name AS GFE1, gfe2.name AS GFE2,collect(DISTINCT feat2.name) AS Names," \
-        + " collect(DISTINCT {accesion:f4.accession,rank:feat2.rank, name: feat2.name}) AS Accession " \
-        + " return GFE1,GFE2,Names,Accession,size(Accession) AS Count" \
+        + " WITH gfe1.name AS GFE1, collect(DISTINCT feat1.name) AS Names," \
+        + " collect(DISTINCT {accesion:f1.accession,rank:feat1.rank, name: feat1.name}) AS Accession " \
+        + " return GFE1,Names,Accession,size(Accession) AS Count" \
         + " ORDER BY Count DESC"
 
     return(typing_match)
