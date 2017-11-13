@@ -5,6 +5,7 @@ RUN apt-get update -q \
     && apt-get dist-upgrade -qy \
     && apt-get install -qyy wget curl build-essential cpp git \
     && apt-get -qyy install python3.6 python3-pip python3-dev python3-setuptools uwsgi-plugin-python3 \
+    && pip install -e 'git+https://github.com/nmdp-bioinformatics/service-gfe-submission.git#egg=1.0.0&subdirectory=client-python' \
     && cd opt/ && git clone https://github.com/nmdp-bioinformatics/service-act && cd service-act \
     && pip3 install --upgrade pip \
     && pip3 install -r requirements.txt \
