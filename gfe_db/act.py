@@ -120,9 +120,10 @@ class Act(object):
         seqann = None
         if conn():
             server = BioSeqDatabase.open_database(driver="pymysql",
-                                                  user="root",
-                                                  passwd="", host="localhost",
-                                                  db="bioseqdb")
+                                                  user=biosqluser,
+                                                  passwd=biosqlpass,
+                                                  host=biosqlhost,
+                                                  db=biosqldb)
             print("Server found!", file=sys.stderr)
             seqann = BioSeqAnn(server=server)
         else:
