@@ -47,9 +47,6 @@ from swagger_server.models.persisted_data import PersistedData
 
 from py2neo import Node, Relationship
 import pandas as pa
-import swagger_client
-from swagger_client.rest import ApiException
-from swagger_client.api_client import ApiClient
 import os
 import glob
 import re
