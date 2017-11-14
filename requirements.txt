@@ -15,5 +15,5 @@ typing==3.6.1
 uWSGI==2.0.15
 flask
 biopython
-pygfe==0.0.2
+pygfe
 seqann
