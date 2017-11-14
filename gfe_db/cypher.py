@@ -213,7 +213,6 @@ def groups_classI(locus, group, exon2, exon3):
     withst = " WITH collect(DISTINCT hla.name) as HLA,collect(DISTINCT gfe1.name) as GFE,collect(DISTINCT group.name) as ARS"
     returnc = " RETURN HLA,GFE,ARS"
     cypher = match + match2 + where + where2 + withst + returnc
-    print(cypher)
     return(cypher)
 
 

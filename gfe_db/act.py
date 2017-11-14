@@ -47,9 +47,9 @@ from swagger_server.models.persisted_data import PersistedData
 
 from py2neo import Node, Relationship
 import pandas as pa
-import swagger_client
-from swagger_client.rest import ApiException
-from swagger_client.api_client import ApiClient
+#import swagger_client
+# from swagger_client.rest import ApiException
+# from swagger_client.api_client import ApiClient
 import os
 import glob
 import re
@@ -137,8 +137,8 @@ class Act(object):
         self.persist = persist
         self.graph = graph
         self.version = '0.0.5'
-        api_client = ApiClient(host=hostname)
-        self.api = swagger_client.DefaultApi(api_client=api_client)
+        # api_client = ApiClient(host=hostname)
+        # self.api = swagger_client.DefaultApi(api_client=api_client)
         structure_dir = os.path.dirname(__file__)
         struture_files = glob.glob(structure_dir + '/data/*.structure')
         self.structures = {}
@@ -335,14 +335,14 @@ class Act(object):
                 for i in range(0, len(seq_features['term'])):
                     feature = Feature(accession=seq_features['accession'][i], rank=seq_features['rank'][i], sequence=seq_features['sequence'][i], term=lc(seq_features['term'][i]))
                     features.append(feature)
-                seq_o = self.gfe_sequence(locus, type_gfe)
+                seq_o = self.gfe.get_sequence(type_gfe)
                 ac_object.full_gene = Feature(rank="1", sequence=seq_o.sequence, term="gene")
                 ac_object.features = features
                 ac_object.ihiw_ref = self.get_ref_allele(locus, type_gfe, ac_object.features)
                 related_gfe = self.gfe_lookup(type_gfe, ac_object.features)
                 ac_object.typing = related_gfe
             else:
-                seq_o = self.gfe_sequence(locus, type_gfe)
+                seq_o = self.gfe.get_sequence(type_gfe)
                 ac_object.full_gene = Feature(rank="1", sequence=seq_o.sequence, term="gene")
                 ac_object.features = [Feature(accession=f.accession, rank=f.rank, sequence=f.sequence, term=lc(f.term)) for f in seq_o.structure]
                 ac_object.typing_status.novel_features = self.unique_features(ac_object.features)
@@ -446,26 +446,6 @@ class Act(object):
         annotation = self.seqann.annotate(seq_rec, locus)
         features, gfe = self.gfe.get_gfe(annotation, locus)
         return {'gfe': gfe, 'structure': features}
-        # try:
-        #     return self.api.gfe_post(locus=locus, sequence=sequence, verbose=1)
-        # except ApiException as e:
-        #     print("Exception when calling DefaultApi->gfe_post: %s\n" % e)
-        #     return e
-
-    def gfe_sequence(self, locus, gfe):
-        """
-        creates GFE from HLA sequence and locus
-
-        :param locus: string containing HLA locus.
-        :param sequence: string containing sequence data.
-
-        :return: GFEobject.
-        """
-        try:
-            return self.api.sequence_post(locus=locus, gfe=gfe, verbose=1)
-        except ApiException as e:
-            print("Exception when calling DefaultApi->sequence_post: %s\n" % e)
-            return e
 
     def gfe_lookup(self, gfe, features):
 
