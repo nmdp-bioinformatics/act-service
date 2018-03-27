@@ -6,3 +6,4 @@ pandas
 pygfe
 py2neo
 uwsgi
+pymysql

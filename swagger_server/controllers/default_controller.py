@@ -15,6 +15,7 @@ from Bio import SeqIO
 
 from seqann.sequence_annotation import BioSeqAnn
 from BioSQL import BioSeqDatabase
+import pymysql
 
 neo4jpass = 'gfedb'
 if os.getenv("NEO4JPASS"):
@@ -49,6 +50,19 @@ if os.getenv("BIOSQLPORT"):
     biosqlport = os.getenv("BIOSQLPORT")
 
 
+def conn():
+    try:
+        # print(biosqlpass, biosqluser, biosqlhost, biosqldb, biosqlport, sep="\t")
+        conn = pymysql.connect(host=biosqlhost,
+                               port=biosqlport, user=biosqluser,
+                               passwd=biosqlpass, db=biosqldb)
+        conn.close()
+        return True
+    except Exception as e:
+        print("Exception while checking MYSQL Connection:" + str(e))
+        return False
+
+
 def typeseq_get(locus, sequence, imgthla_version='3310', neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass, verbose=None):  # noqa: E501
     """typeseq_get
 
@@ -73,16 +87,15 @@ def typeseq_get(locus, sequence, imgthla_version='3310', neo4j_url=neo4jurl, use
     """
     graph = Graph(neo4jurl, user=neo4juser, password=neo4jpass,
                   bolt=False)
-    #if conn():
-    server = BioSeqDatabase.open_database(driver="pymysql",
-                                          user=biosqluser,
-                                          passwd=biosqlpass,
-                                          host=biosqlhost,
-                                          db=biosqldb)
-    seqann = BioSeqAnn(server=server, align=True, verbose=True)
-    #else:
-    #    print
-    #    seqann = BioSeqAnn()
+    if conn():
+        server = BioSeqDatabase.open_database(driver="pymysql",
+                                              user=biosqluser,
+                                              passwd=biosqlpass,
+                                              host=biosqlhost,
+                                              db=biosqldb)
+        seqann = BioSeqAnn(server=server, align=True, verbose=True)
+    else:
+        seqann = BioSeqAnn()
     pygfe = pyGFE(graph=graph,
                   seqann=seqann,
                   verbose=True,
