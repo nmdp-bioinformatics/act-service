@@ -11,49 +11,12 @@ info:
     name: "GNU GENERAL PUBLIC LICENSE"
     url: "https://www.gnu.org/licenses/lgpl.html"
 paths:
-  /persisted_data:
+  /type_seq:
     get:
       description: "Get HLA and GFE from consensus sequence or GFE notation"
-      operationId: "persist_get"
+      operationId: "typeseq_get"
       produces:
-        - "application/json"
-      parameters:
-      - name: "neo4j_url"
-        in: "query"
-        description: "URL for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "user"
-        in: "query"
-        description: "Username for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "password"
-        in: "query"
-        description: "Password for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "verbose"
-        in: "query"
-        description: "Flag for running service in verbose"
-        required: false
-        type: "boolean"
-      responses:
-        200:
-          description: "Persisted sequence data"
-          schema:
-            $ref: "#/definitions/Persisted"
-        404:
-          description: "Failed to generate GFE"
-          schema:
-            $ref: "#/definitions/Error"
-      x-swagger-router-controller: "swagger_server.controllers.default_controller"
-  /act:
-    get:
-      description: "Get HLA and GFE from consensus sequence or GFE notation"
-      operationId: "act_get"
-      produces:
-        - "application/json"
+      - "application/json"
       parameters:
       - name: "locus"
         in: "query"
@@ -63,13 +26,14 @@ paths:
       - name: "sequence"
         in: "query"
         description: "Consensus sequence"
-        required: false
+        required: true
         type: "string"
-      - name: "gfe"
+      - name: "imgthla_version"
         in: "query"
-        description: "GFE Notation"
+        description: "IMGT/HLA DB Version"
         required: false
         type: "string"
+        default: "Latest"
       - name: "neo4j_url"
         in: "query"
         description: "URL for the neo4j graph"
@@ -85,240 +49,18 @@ paths:
         description: "Password for the neo4j graph"
         required: false
         type: "string"
-      - name: "gfe_url"
-        in: "query"
-        description: "URL for the gfe-service"
-        required: false
-        type: "string"
       - name: "verbose"
         in: "query"
         description: "Flag for running service in verbose"
-        required: false
-        type: "boolean"
-      - name: "persist"
-        in: "query"
-        description: "Flag for persisting the data in the GFE DB"
         required: false
         type: "boolean"
       responses:
         200:
           description: "HLA and GFE from consensus sequence"
           schema:
-            $ref: "#/definitions/AlleleCall"
+            $ref: "#/definitions/Typing"
         404:
-          description: "Failed to generate GFE"
-          schema:
-            $ref: "#/definitions/Error"
-      x-swagger-router-controller: "swagger_server.controllers.default_controller"
-  /gfe:
-    get:
-      description: "Get GFE notation associated with an HLA allele"
-      operationId: "gfe_get"
-      parameters:
-      - name: "hla"
-        in: "query"
-        description: "HLA allele"
-        required: true
-        type: "string"
-      - name: "neo4j_url"
-        in: "query"
-        description: "URL for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "user"
-        in: "query"
-        description: "Username for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "password"
-        in: "query"
-        description: "Password for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "gfe_url"
-        in: "query"
-        description: "URL for the gfe-service"
-        required: false
-        type: "string"
-      - name: "verbose"
-        in: "query"
-        description: "Flag for running service in verbose"
-        required: false
-        type: "boolean"
-      responses:
-        200:
-          description: "GFE notation associated with an HLA allele"
-          schema:
-            $ref: "#/definitions/GfeCall"
-        404:
-          description: "Failed to generate GFE"
-          schema:
-            $ref: "#/definitions/Error"
-      x-swagger-router-controller: "swagger_server.controllers.default_controller"
-  /ars:
-    get:
-      description: "Get ARS group associated with a GFE notation or HLA allele"
-      operationId: "ars_get"
-      parameters:
-      - name: "allele"
-        in: "query"
-        description: "HLA allele or GFE Notation"
-        required: true
-        type: "string"
-      - name: "group"
-        in: "query"
-        description: "ARS Group Type"
-        required: true
-        type: "string"
-      - name: "neo4j_url"
-        in: "query"
-        description: "URL for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "user"
-        in: "query"
-        description: "Username for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "password"
-        in: "query"
-        description: "Password for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "gfe_url"
-        in: "query"
-        description: "URL for the gfe-service"
-        required: false
-        type: "string"
-      - name: "verbose"
-        in: "query"
-        description: "Flag for running service in verbose"
-        required: false
-        type: "boolean"
-      responses:
-        200:
-          description: "ARS group associated with a GFE notation or HLA allele"
-          schema:
-            $ref: "#/definitions/ArsCall"
-        404:
-          description: "Failed to generate GFE from fasta"
-          schema:
-            $ref: "#/definitions/Error"
-      x-swagger-router-controller: "swagger_server.controllers.default_controller"
-  /act_format:
-    get:
-      description: "Get HLA and GFE from consensus sequence or GFE notation"
-      operationId: "actformat_get"
-      produces:
-        - "text/plain"
-      parameters:
-      - name: "locus"
-        in: "query"
-        description: "Valid HLA locus"
-        required: true
-        type: "string"
-      - name: "sequence"
-        in: "query"
-        description: "Consensus sequence"
-        required: false
-        type: "string"
-      - name: "gfe"
-        in: "query"
-        description: "GFE Notation"
-        required: false
-        type: "string"
-      - name: "format_type"
-        in: "query"
-        description: "Specify the data format that will be returned"
-        required: true
-        type: "string"
-      - name: "neo4j_url"
-        in: "query"
-        description: "URL for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "user"
-        in: "query"
-        description: "Username for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "password"
-        in: "query"
-        description: "Password for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "gfe_url"
-        in: "query"
-        description: "URL for the gfe-service"
-        required: false
-        type: "string"
-      - name: "verbose"
-        in: "query"
-        description: "Flag for running service in verbose"
-        required: false
-        type: "boolean"
-      - name: "persist"
-        in: "query"
-        description: "Flag for persisting the data in the GFE DB"
-        required: false
-        type: "boolean"
-      responses:
-        404:
-          description: "Failed to generate GFE"
-          schema:
-            $ref: "#/definitions/Error"
-      x-swagger-router-controller: "swagger_server.controllers.default_controller"  
-  /feature_search:
-    get:
-      description: "GFE notation and HLA alleles associated with an HLA allele or alleles"
-      operationId: "feature_get"
-      parameters:
-      - name: "hla"
-        in: "query"
-        description: "HLA Allele"
-        required: true
-        type: "array"
-        items: 
-          type: "string"
-      - name: "feature"
-        in: "query"
-        description: "HLA feature"
-        required: true
-        type: "array"
-        items: 
-          type: "string"
-      - name: "neo4j_url"
-        in: "query"
-        description: "URL for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "user"
-        in: "query"
-        description: "Username for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "password"
-        in: "query"
-        description: "Password for the neo4j graph"
-        required: false
-        type: "string"
-      - name: "gfe_url"
-        in: "query"
-        description: "URL for the gfe-service"
-        required: false
-        type: "string"
-      - name: "verbose"
-        in: "query"
-        description: "Flag for running service in verbose"
-        required: false
-        type: "boolean"
-      responses:
-        200:
-          description: "GFE notation and HLA alleles associated with an HLA allele or alleles"
-          schema:
-            $ref: "#/definitions/FeatureCall"
-        404:
-          description: "Failed to find GFE associated with features"
+          description: "Failed to generate allele call"
           schema:
             $ref: "#/definitions/Error"
       x-swagger-router-controller: "swagger_server.controllers.default_controller"
@@ -327,163 +69,52 @@ definitions:
     type: "object"
     required:
     - "Message"
-    - "version"
+    - "gfedb_version"
+    - "imgtdb_version"
+    - "pygfe_version"
     properties:
       Message:
         type: "string"
-      accession:
+      pygfe_version:
         type: "string"
-      file:
+      gfedb_version:
         type: "string"
-      gfe:
+      imgtdb_version:
         type: "string"
       log:
         type: "array"
         items:
           type: "string"
-      rank:
-        type: "integer"
-      sequence:
-        type: "string"
-      term:
-        type: "string"
       type:
         type: "string"
-      version:
-        type: "string"
-
-
-  Persisted:
+  Typing:
     type: "object"
     properties:
-      persisted_data:
+      seqdiff:
         type: "array"
         items:
-          $ref: "#/definitions/PersistedData"
-      act_version:
-        type: "string"
-      gfedb_version:
-        type: "string"
-
-  PersistedData:
-    type: "object"
-    properties:
-      hla:
-        type: "string"
-      gfe:
-        type: "string"
-      term:
-        type: "string"
-      rank:
-        type: "string"
-      accession:
-        type: "string"
-      sequence:
-        type: "string"
-
-
-  FeatureCall:
-    type: "object"
-    properties:
-      alleles:
+          $ref: "#/definitions/Seqdiff"
+      protdiff:
         type: "array"
         items:
-          type: "string"
-      features_searched:
-        type: "array"
-        items:
-          type: "string"
-      matched:
-        type: "array"
-        items:
-          $ref: "#/definitions/Typing"
-      act_version:
-        type: "string"
-      gfe_version:
-        type: "string"
-      gfedb_version:
-        type: "string"
-    example:
-      alleles:
-        - "HLA-A*01:01:01:01"
-        - "HLA-A*01:01:01:02"
-      features_searched:
-        - "exon2"
-        - "exon3"
-        - "intron2"
-      matched:
-        - hla: "HLA-A*01:01:01:01"
-          related_gfe:
-            - gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
-              features_shared: 4
-              shares:
-              - accession: 1
-                locus: HLA-A
-                rank: 1
-                term: exon
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-              - accession: 2
-                locus: HLA-A
-                rank: 1
-                term: intron
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-        - hla: "HLA-A*01:01:01:02"
-          related_gfe:
-            - gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
-              features_shared: 4
-              shares:
-              - accession: 1
-                locus: HLA-A
-                rank: 1
-                term: exon
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-              - accession: 2
-                locus: HLA-A
-                rank: 1
-                term: intron
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-            - gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
-              features_shared: 4
-              shares:
-                - accession: 1
-                  locus: HLA-A
-                  rank: 1
-                  term: exon
-                  sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-                - accession: 2
-                  locus: HLA-A
-                  rank: 1
-                  term: intron
-                  sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-      act_version: "0.0.1"
-      gfe_version: "0.0.1"
-      gfedb_version: "0.0.1"
-
-
-  AlleleCall:
-    type: "object"
-    properties:
-      typing:
-        type: "array"
-        items:
-          $ref: "#/definitions/Typing"
+          $ref: "#/definitions/Seqdiff"
       features:
         type: "array"
         items:
           $ref: "#/definitions/Feature"
-      ihiw_ref:
-        type: "array"
-        items:
-          $ref: "#/definitions/Typing"
-      full_gene:
-        $ref: "#/definitions/Feature"
-      typing_status:
-        $ref: "#/definitions/TypingStatus"      
       gfe:
         type: "string"
-      act_version:
+      hla:
         type: "string"
-      gfe_version:
+      closest_gfe:
+        type: "string"
+      full_gene_accession:
+        type: "integer"
+      differences:
+        type: "integer"
+      status:
+        type: "string"
+      pygfe_version:
         type: "string"
       gfedb_version:
         type: "string"
@@ -491,215 +122,71 @@ definitions:
         type: "string"
     example:
       gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
-      typing:
-        - hla: "HLA-A*01:01:01:01"
-          related_gfe:
-            - gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
-              features_shared: 4
-              shares:
-              - accession: 1
-                locus: HLA-A
-                rank: 1
-                term: exon
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-              - accession: 2
-                locus: HLA-A
-                rank: 1
-                term: intron
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-        - hla: "HLA-A*01:01:01:02"
-          related_gfe:
-            - gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
-              features_shared: 4
-              shares:
-              - accession: 1
-                locus: HLA-A
-                rank: 1
-                term: exon
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-              - accession: 2
-                locus: HLA-A
-                rank: 1
-                term: intron
-                sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-            - gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
-              features_shared: 4
-              shares:
-                - accession: 1
-                  locus: HLA-A
-                  rank: 1
-                  term: exon
-                  sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-                - accession: 2
-                  locus: HLA-A
-                  rank: 1
-                  term: intron
-                  sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
+      hla: "HLA-A*01:01:01:01"
+      G: "HLA-A*01:01:01G"
+      lg: "HLA-A*01:01g"
+      full_gene_accession: 10093
+      closest_gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
+      differences: 10
+      sequence_differences:
+      - term: "intron"
+        rank: 1
+        pos: 10
+        ref: "A"
+        inseq: "G"
+      protdiff:
+        pos: 4
+        location: "ARD"
+        ref: "A"
+        inseq: "G"
+      status: "novel"
       features:
       - accession: 1
-        locus: HLA-A
+        locus: "HLA-A"
         rank: 1
-        term: exon
-        sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
+        term: "exon"
+        sequence: "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG"
       - accession: 2
-        locus: HLA-A
+        locus: "HLA-A"
         rank: 1
-        sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-        term: exon
+        sequence: "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG"
+        term: "exon"
       act_version: "0.0.1"
       gfe_version: "0.0.1"
       gfedb_version: "0.0.1"
-
-  Feature:
+  Seqdiff:
+    type: "object"
+    properties:
+      term:
+        type: "string"
+      rank:
+        type: "integer"
+      location:
+        type: "integer"
+      ref:
+        type: "string"
+      inseq:
+        type: "string"
     example:
-      accession: 1
-      locus: HLA-A
+      term: "intron"
       rank: 1
-      sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-      term: exon
+      pos: 10
+      ref: "A"
+      inseq: "G"
+  Feature:
+    type: "object"
     properties:
       accession:
-        type: integer
-      rank:
-        type: integer
-      sequence:
-        type: string
-      term:
-        type: string
-    type: object
-
-  GfeCall:
-    type: "object"
-    properties:
-      hla:
-        type: "string"
-      related_gfe:
-        type: "array"
-        items:
-          $ref: "#/definitions/GfeTyping"
-      act_version:
-        type: "string"
-      gfe_version:
-        type: "string"
-      gfedb_version:
-        type: "string"         
-    example:
-      hla: "HLA-A*01:01:01:01"
-      related_gfe:
-        - gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
-          features_shared: 4
-          shares:
-          - accession: 1
-            locus: HLA-A
-            rank: 1
-            term: exon
-            sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-          - accession: 2
-            locus: HLA-A
-            rank: 1
-            term: intron
-            sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-
-
-  TypingStatus:
-    type: "object"
-    properties:
-      status:
-        type: "string"
-      novel_features:
-        type: "array"
-        items:
-          $ref: "#/definitions/Feature"     
-    example:
-      status: "novel"
-      novel_features:
-        - accession: 1
-          locus: HLA-A
-          rank: 1
-          term: exon
-          sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-        - accession: 2
-          locus: HLA-A
-          rank: 1
-          term: intron
-          sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-
-
-
-  Typing:
-    type: "object"
-    properties:
-      hla:
-        type: "string"
-      related_gfe:
-        type: "array"
-        items:
-          $ref: "#/definitions/GfeTyping"     
-    example:
-      hla: "HLA-A*01:01:01:01"
-      related_gfe:
-        - gfe: "HLA-Aw1-1-7-20-10-32-7-1-1-1-6-1-5-3-5-1-1"
-          features_shared: 4
-          shares:
-          - accession: 1
-            locus: HLA-A
-            rank: 1
-            term: exon
-            sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-          - accession: 2
-            locus: HLA-A
-            rank: 1
-            term: intron
-            sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-
-
-  GfeTyping:
-    type: "object"
-    properties:
-      gfe:
-        type: "string"
-      features_shared:
         type: "integer"
-      shares:
-        type: "array"
-        items:
-          $ref: "#/definitions/Feature"
-    example:
-      gfe: "HLA-A*01:01:01:01"
-      features_shared: 4
-      shares:
-      - accession: 1
-        locus: HLA-A
-        rank: 1
-        term: exon
-        sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-      - accession: 2
-        locus: HLA-A
-        rank: 1
-        term: intron
-        sequence: ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG
-
-  ArsCall:
-    type: "object"
-    properties:
-      allele:
+      rank:
+        type: "integer"
+      sequence:
         type: "string"
-      group_type:
-        type: "string"
-      group:
-        type: "string"
-      share_allele:
-        type: "array"
-        items:
-          $ref: "#/definitions/Typing"
-      act_version:
-        type: "string"
-      gfedb_version:
+      term:
         type: "string"
     example:
-      allele: "HLA-A*01:01:01:01"
-      group_type: "G_GROUP"
-      group: "HLA-A*01:01:01G"
-      act_version: "0.0.1"
-      gfedb_version: "0.0.1"
-
+      accession: 1
+      locus: "HLA-A"
+      rank: 1
+      sequence: "ACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTGACTG"
+      term: "exon"
