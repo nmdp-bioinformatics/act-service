@@ -26,4 +26,4 @@ RUN pip3 install -r requirements.txt
 EXPOSE 8080
 EXPOSE 5000
 
-CMD uwsgi --http :8080 --plugin python3.6 --wsgi-file app.py --callable app -p 10
+CMD python3.6 app.py

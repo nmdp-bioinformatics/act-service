@@ -3,16 +3,24 @@ swagger: "2.0"
 info:
   description: "The Allele Calling  service provides an API for converting raw sequence\
     \ data to GFE and HLA allele calls."
-  version: "0.0.4"
+  version: "0.0.5"
   title: "Allele Calling Service"
   contact:
     email: "mhalagan@nmdp.org"
   license:
     name: "GNU GENERAL PUBLIC LICENSE"
     url: "https://www.gnu.org/licenses/lgpl.html"
+tags:
+  - name: "Type Seq"
+    description: "Endpoint to annotate and call allele names"
+  - name: "Type Align"
+    description: "Experimental endpoint for producing annotations with sequence differences"
+
 paths:
   /type_seq:
     get:
+      tags:
+       - "Type Seq"
       description: "Get HLA and GFE from consensus sequence or GFE notation"
       operationId: "typeseq_get"
       produces:
@@ -33,7 +41,62 @@ paths:
         description: "IMGT/HLA DB Version"
         required: false
         type: "string"
-        default: "Latest"
+        default: "3310"
+      - name: "neo4j_url"
+        in: "query"
+        description: "URL for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "user"
+        in: "query"
+        description: "Username for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "password"
+        in: "query"
+        description: "Password for the neo4j graph"
+        required: false
+        type: "string"
+      - name: "verbose"
+        in: "query"
+        description: "Flag for running service in verbose"
+        required: false
+        type: "boolean"
+      responses:
+        200:
+          description: "HLA and GFE from consensus sequence"
+          schema:
+            $ref: "#/definitions/Typing"
+        404:
+          description: "Failed to generate allele call"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+  /type_align:
+    get:
+      tags:
+       - "Type Align"
+      description: "Get HLA and GFE from consensus sequence or GFE notation"
+      operationId: "typealign_get"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "locus"
+        in: "query"
+        description: "Valid HLA locus"
+        required: true
+        type: "string"
+      - name: "sequence"
+        in: "query"
+        description: "Consensus sequence"
+        required: true
+        type: "string"
+      - name: "imgthla_version"
+        in: "query"
+        description: "IMGT/HLA DB Version"
+        required: false
+        type: "string"
+        default: "3310"
       - name: "neo4j_url"
         in: "query"
         description: "URL for the neo4j graph"
