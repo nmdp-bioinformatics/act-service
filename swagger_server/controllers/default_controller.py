@@ -50,9 +50,11 @@ biosqldb = "bioseqdb"
 if os.getenv("BIOSQLDB"):
     biosqldb = os.getenv("BIOSQLDB")
 
-biosqlport = 3307
+biosqlport = 3306
 if os.getenv("BIOSQLPORT"):
     biosqlport = os.getenv("BIOSQLPORT")
+    if type(biosqlport) == type(biosqldb):
+        biosqlport = int(biosqlport)
 
 loadfeats = True
 if os.getenv("LOADFEATS"):
