@@ -23,7 +23,7 @@ class Seqdiff(Model):
         :param rank: The rank of this Seqdiff.  # noqa: E501
         :type rank: int
         :param location: The location of this Seqdiff.  # noqa: E501
-        :type location: str
+        :type location: int
         :param ref: The ref of this Seqdiff.  # noqa: E501
         :type ref: str
         :param inseq: The inseq of this Seqdiff.  # noqa: E501

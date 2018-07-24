@@ -18,7 +18,7 @@ class Typing(Model):
     """
 
     def __init__(self, seqdiff: List[Seqdiff]=None, protdiff: List[Seqdiff]=None, features: List[Feature]=None, gfe: str=None, hla: str=None, closest_gfe: str=None, full_gene_accession: int=None, differences: int=None, status: str=None, pygfe_version: str=None, gfedb_version: str=None, imgtdb_version: str=None):  # noqa: E501
-        """Typing - a model defined in Swagger
+        """Typing - a model defined in Swaggerr
 
         :param seqdiff: The seqdiff of this Typing.  # noqa: E501
         :type seqdiff: List[Seqdiff]

@@ -21,9 +21,11 @@ RUN apt-get install ncbi-blast+ -y
 
 WORKDIR opt/
 
-RUN pip3 install -r requirements.txt
+RUN pip3 install -r requirements.txt \
+	&& cd /opt \
+	&& python3.6 setup.py install
 
 EXPOSE 8080
 EXPOSE 5000
 
-CMD python3.6 app.py
+CMD python3.6 -m swagger_server

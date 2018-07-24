@@ -11,37 +11,38 @@ info:
     name: "GNU GENERAL PUBLIC LICENSE"
     url: "https://www.gnu.org/licenses/lgpl.html"
 tags:
-  - name: "Type Seq"
-    description: "Endpoint to annotate and call allele names"
-  - name: "Type Align"
-    description: "Experimental endpoint for producing annotations with sequence differences"
-
+- name: "Type Seq"
+  description: "Endpoint to annotate and call allele names"
+- name: "Annotate"
+  description: "Annotate a sequence without making an allele call"
+- name: "Type Align"
+  description: "Experimental endpoint for producing annotations with sequence differences"
 paths:
   /type_seq:
     get:
       tags:
-       - "Type Seq"
+      - "Type Seq"
       description: "Get HLA and GFE from consensus sequence or GFE notation"
       operationId: "typeseq_get"
       produces:
       - "application/json"
       parameters:
-      - name: "locus"
-        in: "query"
-        description: "Valid HLA locus"
-        required: true
-        type: "string"
       - name: "sequence"
         in: "query"
         description: "Consensus sequence"
         required: true
+        type: "string"
+      - name: "locus"
+        in: "query"
+        description: "Valid HLA locus"
+        required: false
         type: "string"
       - name: "imgthla_version"
         in: "query"
         description: "IMGT/HLA DB Version"
         required: false
         type: "string"
-        default: "3310"
+        default: "3.31.0"
       - name: "neo4j_url"
         in: "query"
         description: "URL for the neo4j graph"
@@ -57,11 +58,6 @@ paths:
         description: "Password for the neo4j graph"
         required: false
         type: "string"
-      - name: "verbose"
-        in: "query"
-        description: "Flag for running service in verbose"
-        required: false
-        type: "boolean"
       responses:
         200:
           description: "HLA and GFE from consensus sequence"
@@ -71,32 +67,67 @@ paths:
           description: "Failed to generate allele call"
           schema:
             $ref: "#/definitions/Error"
-      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+      x-swagger-router-controller: "swagger_server.controllers.type_seq_controller"
+  /annotate:
+    get:
+      tags:
+      - "Annotate"
+      description: "Find the sequence differences between two GFE"
+      operationId: "annotate_get"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "sequence"
+        in: "query"
+        description: "Valid consensus sequence"
+        required: true
+        type: "string"
+      - name: "locus"
+        in: "query"
+        description: "Valid locus"
+        required: false
+        type: "string"
+      - name: "imgthla_version"
+        in: "query"
+        description: "IMGT/HLA DB Version"
+        required: false
+        type: "string"
+        default: "3.31.0"
+      responses:
+        200:
+          description: "HLA and GFE from consensus sequence"
+          schema:
+            $ref: "#/definitions/Typing"
+        404:
+          description: "Failed to generate allele call"
+          schema:
+            $ref: "#/definitions/Error"
+      x-swagger-router-controller: "swagger_server.controllers.annotate_controller"
   /type_align:
     get:
       tags:
-       - "Type Align"
+      - "Type Align"
       description: "Get HLA and GFE from consensus sequence or GFE notation"
       operationId: "typealign_get"
       produces:
       - "application/json"
       parameters:
-      - name: "locus"
-        in: "query"
-        description: "Valid HLA locus"
-        required: true
-        type: "string"
       - name: "sequence"
         in: "query"
         description: "Consensus sequence"
         required: true
+        type: "string"
+      - name: "locus"
+        in: "query"
+        description: "Valid HLA locus"
+        required: false
         type: "string"
       - name: "imgthla_version"
         in: "query"
         description: "IMGT/HLA DB Version"
         required: false
         type: "string"
-        default: "3310"
+        default: "3.31.0"
       - name: "neo4j_url"
         in: "query"
         description: "URL for the neo4j graph"
@@ -112,11 +143,6 @@ paths:
         description: "Password for the neo4j graph"
         required: false
         type: "string"
-      - name: "verbose"
-        in: "query"
-        description: "Flag for running service in verbose"
-        required: false
-        type: "boolean"
       responses:
         200:
           description: "HLA and GFE from consensus sequence"
@@ -126,7 +152,7 @@ paths:
           description: "Failed to generate allele call"
           schema:
             $ref: "#/definitions/Error"
-      x-swagger-router-controller: "swagger_server.controllers.default_controller"
+      x-swagger-router-controller: "swagger_server.controllers.type_align_controller"
 definitions:
   Error:
     type: "object"
