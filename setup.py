@@ -21,8 +21,7 @@ setup(
     url="https://github.com/nmdp-bioinformatics/service-act",
     keywords=["Swagger", "Allele Calling Service"],
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    package_data={'swagger_server': ['swagger/swagger.yaml'], 'gfe_db': ['data/*']},
-    scripts=['scripts/gfe2hla'],
+    package_data={'swagger_server': ['swagger/swagger.yaml']},
     install_requires=['seqann', 'pygfe', 'py2neo', 'pandas', 'connexion', 'nose', 'biopython'],
     include_package_data=True,
     long_description="""\
