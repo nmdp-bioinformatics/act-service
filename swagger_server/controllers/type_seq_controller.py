@@ -16,47 +16,13 @@ import logging
 import io
 import re
 
-neo4jpass = 'gfedb'
-if os.getenv("NEO4JPASS"):
-    neo4jpass = os.getenv("NEO4JPASS")
-
-neo4juser = 'neo4j'
-if os.getenv("NEO4JUSER"):
-    neo4juser = os.getenv("NEO4JUSER")
-
-neo4jurl = "http://neo4j.b12x.org:80"
-if os.getenv("NEO4JURL"):
-    neo4jurl = os.getenv("NEO4JURL")
-
-biosqlpass = "my-secret-pw"
-if os.getenv("BIOSQLPASS"):
-    biosqlpass = os.getenv("BIOSQLPASS")
-
-biosqluser = 'root'
-if os.getenv("BIOSQLUSER"):
-    biosqluser = os.getenv("BIOSQLUSER")
-
-biosqlhost = "localhost"
-if os.getenv("BIOSQLHOST"):
-    biosqlhost = os.getenv("BIOSQLHOST")
-
-biosqldb = "bioseqdb"
-if os.getenv("BIOSQLDB"):
-    biosqldb = os.getenv("BIOSQLDB")
-
-biosqlport = 3307
-if os.getenv("BIOSQLPORT"):
-    biosqlport = os.getenv("BIOSQLPORT")
-    if type(biosqlport) == type(biosqldb):
-        biosqlport = int(biosqlport)
-
 seqanns = {}
 gfe_feats = None
 gfe2hla = None
 seq2hla = None
 
 
-def typeseq_get(sequence, locus=None, imgthla_version="3.31.0", neo4j_url=neo4jurl, user=neo4juser, password=neo4jpass):  # noqa: E501
+def typeseq_get(sequence, locus=None, imgthla_version="3.31.0", neo4j_url="http://neo4j.b12x.org:80", user='neo4j', password='gfedb'):  # noqa: E501
     """typeseq_get
 
     Get HLA and GFE from consensus sequence or GFE notation # noqa: E501
