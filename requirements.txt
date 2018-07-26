@@ -35,7 +35,7 @@ pytz==2017.3
 PyYAML==3.12
 requests==2.18.4
 requests-toolbelt==0.8.0
-seqann==0.0.31
+seqann==0.0.32
 six==1.11.0
 swagger-spec-validator==2.1.0
 tqdm==4.19.4
