@@ -3,7 +3,7 @@ swagger: "2.0"
 info:
   description: "The Allele Calling  service provides an API for converting raw sequence\
     \ data to GFE and HLA allele calls."
-  version: "0.0.5"
+  version: "0.0.7"
   title: "Allele Calling Service"
   contact:
     email: "mhalagan@nmdp.org"
@@ -188,6 +188,10 @@ definitions:
         items:
           $ref: "#/definitions/Seqdiff"
       features:
+        type: "array"
+        items:
+          $ref: "#/definitions/Feature"
+      novel_features:
         type: "array"
         items:
           $ref: "#/definitions/Feature"
