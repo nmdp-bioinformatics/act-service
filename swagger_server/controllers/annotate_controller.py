@@ -58,7 +58,7 @@ def annotate_get(sequence, locus=None, imgthla_version="3.31.0"):  # noqa: E501
     if db in seqanns:
         seqann = seqanns[db]
     else:
-        seqann = BioSeqAnn(verbose=True, dbversion=db, verbosity=3)
+        seqann = BioSeqAnn(verbose=True, safemode=True, dbversion=db, verbosity=3)
         seqanns.update({db: seqann})
 
     try:

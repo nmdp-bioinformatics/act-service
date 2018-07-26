@@ -4,7 +4,7 @@ import sys
 from setuptools import setup, find_packages
 
 NAME = "act_service"
-VERSION = "0.0.5"
+VERSION = "0.0.7"
 
 # To install the library, run the following
 #

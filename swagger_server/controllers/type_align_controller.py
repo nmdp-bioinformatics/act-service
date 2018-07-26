@@ -69,7 +69,7 @@ def typealign_get(sequence, locus=None, imgthla_version='3.31.0', neo4j_url="htt
     if db in seqanns:
         seqann = seqanns[db]
     else:
-        seqann = BioSeqAnn(align=True, verbose=True, dbversion=db, verbosity=3)
+        seqann = BioSeqAnn(align=True, safemode=True, verbose=True, dbversion=db, verbosity=3)
         seqanns.update({db: seqann})
 
     try:
