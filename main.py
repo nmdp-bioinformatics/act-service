@@ -4,7 +4,7 @@ import connexion
 from flask import redirect
 from swagger_server import encoder
 
-app = connexion.App(__name__, specification_dir='./swagger/')
+app = connexion.App(__name__, specification_dir='./swagger_server/swagger/')
 app.app.json_encoder = encoder.JSONEncoder
 app.add_api('swagger.yaml', arguments={'title': 'Allele Calling Service'})
 
