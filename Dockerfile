@@ -1,6 +1,8 @@
 FROM ubuntu:17.10
 MAINTAINER Mike Halagan <mhalagan@nmdp.org>
 
+EXPOSE 9000
+
 ADD . opt/
 
 ENV DEBIAN_FRONTEND noninteractive
@@ -25,7 +27,4 @@ RUN pip3 install -r requirements.txt \
 	&& cd /opt \
 	&& python3.6 setup.py install
 
-EXPOSE 8080
-EXPOSE 5000
-
-CMD python3.6 -m swagger_server
+CMD ["uwsgi", "--socket", "0.0.0.0:9000", "--protocol", "http", "-w", "main:app","--master","--processes","4","--threads","2"]
