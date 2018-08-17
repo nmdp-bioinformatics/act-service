@@ -27,4 +27,4 @@ RUN pip3 install -r requirements.txt \
 	&& cd /opt \
 	&& python3.6 setup.py install
 
-CMD ["uwsgi", "--socket", "0.0.0.0:9000", "--protocol", "http", "-w", "main:app","--master","--processes","4","--threads","2"]
+CMD ["uwsgi","--http-timeout","600","--socket", "0.0.0.0:9000","--buffer-size","2000000","--protocol", "http", "-w", "main:app","--master","--processes","4","--threads","2"]

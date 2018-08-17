@@ -5,10 +5,11 @@
       "name": "server",
       "image": "682793961433.dkr.ecr.us-east-1.amazonaws.com/service-act:latest",
       "essential": true,
+      "memory": 200
     },
     {
       "name": "proxy",
-      "image": "682793961433.dkr.ecr.us-east-1.amazonaws.com/nginx:dev",
+      "image": "682793961433.dkr.ecr.us-east-1.amazonaws.com/nginx:latest",
       "essential": true,
       "memory": 200,
       "cpu": 1,
