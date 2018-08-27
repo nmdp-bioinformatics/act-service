@@ -5,11 +5,19 @@
       "name": "server",
       "image": "682793961433.dkr.ecr.us-east-1.amazonaws.com/service-act:latest",
       "essential": true,
-      "memory": 200
+      "memory": 2000,
+      "portMappings": [
+        {
+          "hostPort": 9000,
+          "containerPort": 9000,
+          "protocol": "tcp"
+        }
+      ],
+      "cpu": 5
     },
     {
       "name": "proxy",
-      "image": "682793961433.dkr.ecr.us-east-1.amazonaws.com/nginx:latest",
+      "image": "682793961433.dkr.ecr.us-east-1.amazonaws.com/nginx:dev",
       "essential": true,
       "memory": 200,
       "cpu": 1,
@@ -21,7 +29,7 @@
         }
       ],
       "links": [
-        "server:server"
+        "server"
       ]
     }
   ]

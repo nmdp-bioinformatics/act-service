@@ -5,6 +5,7 @@ from pygfe.models.error import Error  # noqa: E501
 from pygfe.models.typing import Typing  # noqa: E501
 from pygfe.models.feature import Feature
 
+from flask import request
 from swagger_server import util
 from seqann.sequence_annotation import BioSeqAnn
 from Bio.SeqRecord import SeqRecord
