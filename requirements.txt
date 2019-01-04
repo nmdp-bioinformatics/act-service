@@ -33,7 +33,7 @@ pytest==3.6.3
 python-dateutil==2.6.1
 pytz==2017.3
 PyYAML==3.12
-requests==2.18.4
+requests==2.20
 requests-toolbelt==0.8.0
 seqann
 six==1.11.0
