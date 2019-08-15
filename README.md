@@ -11,7 +11,7 @@ To run the server, please execute the following from the root directory:
 
 ```
 pip3 install -r requirements.txt
-python app.py
+python main.py
 ```
 
 and open your browser to here:
