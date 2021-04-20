@@ -24,7 +24,7 @@ pandas==0.22.0
 pkginfo==1.4.1
 pluggy==0.6.0
 prompt-toolkit==1.0.15
-py==1.5.4
+py==1.10.0
 py2neo==4.0.0
 pygfe
 Pygments==2.2.0
