@@ -27,7 +27,7 @@ prompt-toolkit==1.0.15
 py==1.5.4
 py2neo==4.0.0
 pygfe
-Pygments==2.2.0
+Pygments==2.7.4
 PyMySQL==0.7.11
 pytest==3.6.3
 python-dateutil==2.6.1
