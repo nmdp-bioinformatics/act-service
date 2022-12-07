@@ -2,7 +2,7 @@ atomicwrites==1.1.5
 attrs==18.1.0
 biopython==1.70
 bson==0.5.5
-certifi==2017.11.5
+certifi==2022.12.7
 chardet==3.0.4
 click==6.7
 clickclick==1.2.2
