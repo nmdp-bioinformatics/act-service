@@ -43,4 +43,4 @@ twine==1.9.1
 urllib3==1.26.5
 uWSGI==2.0.17
 wcwidth==0.1.7
-Werkzeug==0.15.3
+Werkzeug==2.2.3
