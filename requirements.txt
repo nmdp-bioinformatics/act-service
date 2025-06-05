@@ -19,7 +19,7 @@ MarkupSafe==1.0
 more-itertools==4.2.0
 neo4j-driver==1.6.1
 neotime==1.0.0
-numpy==1.13.3
+numpy==1.22.0
 pandas==0.22.0
 pkginfo==1.4.1
 pluggy==0.6.0
